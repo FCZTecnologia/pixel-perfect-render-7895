@@ -1,24 +1,58 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Brand } from "@/components/Brand";
+import { Button } from "@/components/ui/button";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Condomio — Gestão de condomínios comerciais, industriais e residenciais" },
+      { name: "description", content: "Unidades, leituras de energia e água, faturas e ordens de serviço em um só painel para administradores e condôminos." },
+      { property: "og:title", content: "Condomio — Gestão de condomínios" },
+      { property: "og:description", content: "Unidades, consumo e ordens de serviço em um só painel." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
+const stats = [
+  { k: "Unidades", v: "Galpões, salas e apartamentos" },
+  { k: "Consumo", v: "Energia (kWh) e água (m³) por mês" },
+  { k: "Ordens de serviço", v: "Chamados com status e respostas" },
+];
+
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6 lg:px-8">
+      <header className="flex items-center justify-between">
+        <Brand subtitle="Gestão de condomínios" />
+        <Button asChild variant="outline">
+          <Link to="/auth">Entrar</Link>
+        </Button>
+      </header>
+      <main className="flex flex-1 flex-col justify-center py-16">
+        <div className="text-xs font-medium uppercase tracking-[0.2em] text-primary">Comercial · Industrial · Residencial</div>
+        <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-balance lg:text-6xl">
+          O condomínio inteiro, em um painel claro.
+        </h1>
+        <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+          Administradores lançam leituras e respondem chamados. Condôminos acompanham faturas e abrem ordens de serviço.
+        </p>
+        <div className="mt-8 flex gap-3">
+          <Button asChild size="lg" variant="highlight">
+            <Link to="/auth">Acessar o painel</Link>
+          </Button>
+        </div>
+        <div className="mt-16 grid gap-4 sm:grid-cols-3">
+          {stats.map((s) => (
+            <div key={s.k} className="glass rounded-2xl p-5">
+              <div className="font-display font-semibold">{s.k}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{s.v}</div>
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
