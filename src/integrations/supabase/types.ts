@@ -20,6 +20,8 @@ export type Database = {
           created_at: string
           energy_curr: number
           energy_prev: number
+          hvac_curr: number
+          hvac_prev: number
           id: string
           reference_month: string
           total_amount: number
@@ -32,6 +34,8 @@ export type Database = {
           created_at?: string
           energy_curr?: number
           energy_prev?: number
+          hvac_curr?: number
+          hvac_prev?: number
           id?: string
           reference_month: string
           total_amount?: number
@@ -44,6 +48,8 @@ export type Database = {
           created_at?: string
           energy_curr?: number
           energy_prev?: number
+          hvac_curr?: number
+          hvac_prev?: number
           id?: string
           reference_month?: string
           total_amount?: number
