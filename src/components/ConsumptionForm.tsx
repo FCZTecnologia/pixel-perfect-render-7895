@@ -14,7 +14,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
   const qc = useQueryClient();
   const [unitId, setUnitId] = useState("");
   const [month, setMonth] = useState(thisMonth());
-  const [v, setV] = useState({ ep: "", ec: "", wp: "", wc: "", total: "" });
+  const [v, setV] = useState({ ep: "", ec: "", wp: "", wc: "", hp: "", hc: "", total: "" });
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const n = (s: string) => Number(s.replace(",", ".")) || 0;
@@ -22,14 +22,14 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
 
   async function prefillPrev(id: string) {
     setUnitId(id);
-    const { data } = await supabase.from("consumption").select("energy_curr, water_curr").eq("unit_id", id).order("reference_month", { ascending: false }).limit(1);
-    const last = data?.[0]; if (last) setV((p) => ({ ...p, ep: String(last.energy_curr), wp: String(last.water_curr) }));
+    const { data } = await supabase.from("consumption").select("energy_curr, water_curr, hvac_curr").eq("unit_id", id).order("reference_month", { ascending: false }).limit(1);
+    const last = data?.[0]; if (last) setV((p) => ({ ...p, ep: String(last.energy_curr), wp: String(last.water_curr), hp: String(last.hvac_curr) }));
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!unitId) return void toast.error("Selecione a unidade");
-    if (n(v.ec) < n(v.ep) || n(v.wc) < n(v.wp)) return void toast.error("Leitura atual não pode ser menor que a anterior");
+    if (n(v.ec) < n(v.ep) || n(v.wc) < n(v.wp) || n(v.hc) < n(v.hp)) return void toast.error("Leitura atual não pode ser menor que a anterior");
     setSaving(true);
     try {
       const attachment_path = file ? await uploadAnexo(unitId, file, `fatura-${month}`) : undefined;
@@ -39,6 +39,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
           reference_month: `${month}-01`,
           energy_prev: n(v.ep), energy_curr: n(v.ec),
           water_prev: n(v.wp), water_curr: n(v.wc),
+          hvac_prev: n(v.hp), hvac_curr: n(v.hc),
           total_amount: n(v.total),
           ...(attachment_path ? { attachment_path } : {}),
         },
@@ -46,7 +47,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
       );
       if (error) throw error;
       toast.success("Leitura registrada");
-      setV({ ep: "", ec: "", wp: "", wc: "", total: "" });
+      setV({ ep: "", ec: "", wp: "", wc: "", hp: "", hc: "", total: "" });
       setFile(null);
       qc.invalidateQueries();
     } catch (err) {
@@ -78,6 +79,11 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
         <legend className="mb-1 text-xs font-semibold text-primary">Energia (kWh) · consumo {num(Math.max(0, n(v.ec) - n(v.ep)))}</legend>
         <Input inputMode="decimal" placeholder="Leitura anterior" value={v.ep} onChange={set("ep")} className={field} />
         <Input inputMode="decimal" placeholder="Leitura atual" value={v.ec} onChange={set("ec")} className={field} />
+      </fieldset>
+      <fieldset className="grid grid-cols-2 gap-3">
+        <legend className="mb-1 text-xs font-semibold text-primary">Climatização (kWh) · consumo {num(Math.max(0, n(v.hc) - n(v.hp)))}</legend>
+        <Input inputMode="decimal" placeholder="Leitura anterior" value={v.hp} onChange={set("hp")} className={field} />
+        <Input inputMode="decimal" placeholder="Leitura atual" value={v.hc} onChange={set("hc")} className={field} />
       </fieldset>
       <fieldset className="grid grid-cols-2 gap-3">
         <legend className="mb-1 text-xs font-semibold text-primary">Água/Gás (m³) · consumo {num(Math.max(0, n(v.wc) - n(v.wp)))}</legend>

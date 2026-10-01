@@ -35,7 +35,7 @@ function ConsumptionPage() {
       <div className={isAdmin ? "grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]" : ""}>
         <div className="space-y-3">
           {rows.map((r) => (
-            <Panel key={r.id} className="grid gap-4 p-5 sm:grid-cols-[1.2fr_1fr_1fr_auto] sm:items-center lg:p-5">
+            <Panel key={r.id} className="grid gap-4 p-5 sm:grid-cols-[1.2fr_1fr_1fr_1fr_auto] sm:items-center lg:p-5">
               <div>
                 <div className="font-display font-semibold">{monthLabel(r.reference_month)}</div>
                 {isAdmin && <div className="text-xs text-muted-foreground">{r.units?.identifier}</div>}
@@ -45,6 +45,11 @@ function ConsumptionPage() {
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Energia</div>
                 <div className="text-foreground/70">{num(r.energy_prev)} → {num(r.energy_curr)}</div>
                 <div className="font-medium">{num(r.energy_curr - r.energy_prev)} kWh</div>
+              </div>
+              <div className="text-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Climatização</div>
+                <div className="text-foreground/70">{num(r.hvac_prev)} → {num(r.hvac_curr)}</div>
+                <div className="font-medium">{num(r.hvac_curr - r.hvac_prev)} kWh</div>
               </div>
               <div className="text-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Água/Gás</div>
