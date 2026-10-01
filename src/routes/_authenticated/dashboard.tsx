@@ -136,7 +136,7 @@ function TenantHome() {
                 <div className="mt-1 font-display text-3xl font-semibold">{brl(bill.total_amount)}</div>
                 <div className="mt-1 text-sm text-foreground/70">{monthLabel(bill.reference_month)}</div>
                 <div className="mt-3 text-xs text-muted-foreground">
-                  {num(bill.energy_curr - bill.energy_prev)} kWh · {num(bill.water_curr - bill.water_prev)} m³
+                  {num(bill.energy_curr - bill.energy_prev)} kWh energia · {num(bill.hvac_curr - bill.hvac_prev)} kWh climatização · {num(bill.water_curr - bill.water_prev)} m³
                 </div>
                 {bill.attachment_path && (
                   <Button variant="outline" size="sm" className="mt-4" onClick={() => openAnexo(bill.attachment_path!)}>Baixar fatura</Button>
