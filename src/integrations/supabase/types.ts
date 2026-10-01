@@ -14,16 +14,216 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      consumption: {
+        Row: {
+          attachment_path: string | null
+          created_at: string
+          energy_curr: number
+          energy_prev: number
+          id: string
+          reference_month: string
+          total_amount: number
+          unit_id: string
+          water_curr: number
+          water_prev: number
+        }
+        Insert: {
+          attachment_path?: string | null
+          created_at?: string
+          energy_curr?: number
+          energy_prev?: number
+          id?: string
+          reference_month: string
+          total_amount?: number
+          unit_id: string
+          water_curr?: number
+          water_prev?: number
+        }
+        Update: {
+          attachment_path?: string | null
+          created_at?: string
+          energy_curr?: number
+          energy_prev?: number
+          id?: string
+          reference_month?: string
+          total_amount?: number
+          unit_id?: string
+          water_curr?: number
+          water_prev?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumption_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      os_messages: {
+        Row: {
+          author_id: string
+          created_at: string
+          from_admin: boolean
+          id: string
+          message: string
+          order_id: string
+        }
+        Insert: {
+          author_id?: string
+          created_at?: string
+          from_admin?: boolean
+          id?: string
+          message: string
+          order_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          from_admin?: boolean
+          id?: string
+          message?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "os_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_orders: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          number: number
+          photos: string[]
+          priority: Database["public"]["Enums"]["os_priority"]
+          status: Database["public"]["Enums"]["os_status"]
+          title: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          number?: number
+          photos?: string[]
+          priority?: Database["public"]["Enums"]["os_priority"]
+          status?: Database["public"]["Enums"]["os_status"]
+          title: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          number?: number
+          photos?: string[]
+          priority?: Database["public"]["Enums"]["os_priority"]
+          status?: Database["public"]["Enums"]["os_status"]
+          title?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_orders_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          active: boolean
+          created_at: string
+          document: string | null
+          email: string
+          id: string
+          identifier: string
+          owner_name: string
+          phone: string | null
+          unit_type: Database["public"]["Enums"]["unit_type"]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          document?: string | null
+          email: string
+          id?: string
+          identifier: string
+          owner_name: string
+          phone?: string | null
+          unit_type?: Database["public"]["Enums"]["unit_type"]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          document?: string | null
+          email?: string
+          id?: string
+          identifier?: string
+          owner_name?: string
+          phone?: string | null
+          unit_type?: Database["public"]["Enums"]["unit_type"]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_admin_if_none: { Args: never; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      owns_unit: { Args: { _unit_id: string }; Returns: boolean }
+      owns_unit_path: { Args: { _name: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "condomino"
+      os_priority: "baixa" | "media" | "alta"
+      os_status: "pendente" | "em_andamento" | "concluido" | "cancelado"
+      unit_type: "galpao" | "sala_comercial" | "residencial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +350,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "condomino"],
+      os_priority: ["baixa", "media", "alta"],
+      os_status: ["pendente", "em_andamento", "concluido", "cancelado"],
+      unit_type: ["galpao", "sala_comercial", "residencial"],
+    },
   },
 } as const
