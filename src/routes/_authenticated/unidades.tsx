@@ -55,11 +55,11 @@ function UnitsPage() {
     e.preventDefault();
     if (!editing) return;
     const p = schema.safeParse(editing.form);
-    if (!p.success) return toast.error(p.error.issues[0].message);
+    if (!p.success) return void toast.error(p.error.issues[0]?.message);
     const { error } = editing.id
       ? await supabase.from("units").update(p.data).eq("id", editing.id)
       : await supabase.from("units").insert(p.data);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success("Unidade salva");
     setEditing(null);
     qc.invalidateQueries();

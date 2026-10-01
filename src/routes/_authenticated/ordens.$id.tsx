@@ -40,7 +40,7 @@ function OrderDetail() {
 
   async function setStatus(s: string) {
     const { error } = await supabase.from("service_orders").update({ status: s as OsStatus, updated_at: new Date().toISOString() }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     toast.success("Status atualizado");
     qc.invalidateQueries();
   }
@@ -53,7 +53,7 @@ function OrderDetail() {
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("os_messages").insert({ order_id: id, message: text, from_admin: isAdmin, author_id: u.user!.id });
     setSending(false);
-    if (error) return toast.error(error.message);
+    if (error) return void toast.error(error.message);
     setMsg("");
     qc.invalidateQueries({ queryKey: ["order", id] });
   }

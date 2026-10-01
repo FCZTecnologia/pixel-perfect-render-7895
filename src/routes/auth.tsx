@@ -50,7 +50,7 @@ function AuthPage() {
         return;
       }
       const parsed = schema.safeParse({ email, password });
-      if (!parsed.success) throw new Error(parsed.error.issues[0].message);
+      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
       if (mode === "first") {
         const { data, error } = await supabase.auth.signUp({
           ...parsed.data,

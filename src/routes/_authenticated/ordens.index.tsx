@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { dateLabel, priorityLabel, statusLabel, uploadAnexo, type OsPriority, type OsStatus } from "@/lib/condo";
 
 export const Route = createFileRoute("/_authenticated/ordens/")({
-  validateSearch: (s: Record<string, unknown>) => ({ nova: s.nova === true || s.nova === "true" ? true : undefined }),
+  validateSearch: (s: Record<string, unknown>): { nova?: boolean } => (s["nova"] === true || s["nova"] === "true" ? { nova: true } : {}),
   head: () => ({ meta: [{ title: "Ordens de serviço — Condomio" }] }),
   component: OrdersPage,
 });
@@ -139,7 +139,7 @@ function NewOrderDialog({ open, units, onClose }: { open: boolean; units: { id: 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const p = schema.safeParse({ ...f, unit_id: unitId });
-    if (!p.success) return toast.error(p.error.issues[0].message);
+    if (!p.success) return void toast.error(p.error.issues[0]?.message);
     setSaving(true);
     try {
       const { data: u } = await supabase.auth.getUser();

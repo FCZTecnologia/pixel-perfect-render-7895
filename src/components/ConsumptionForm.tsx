@@ -23,13 +23,13 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
   async function prefillPrev(id: string) {
     setUnitId(id);
     const { data } = await supabase.from("consumption").select("energy_curr, water_curr").eq("unit_id", id).order("reference_month", { ascending: false }).limit(1);
-    if (data?.[0]) setV((p) => ({ ...p, ep: String(data[0].energy_curr), wp: String(data[0].water_curr) }));
+    const last = data?.[0]; if (last) setV((p) => ({ ...p, ep: String(last.energy_curr), wp: String(last.water_curr) }));
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!unitId) return toast.error("Selecione a unidade");
-    if (n(v.ec) < n(v.ep) || n(v.wc) < n(v.wp)) return toast.error("Leitura atual não pode ser menor que a anterior");
+    if (!unitId) return void toast.error("Selecione a unidade");
+    if (n(v.ec) < n(v.ep) || n(v.wc) < n(v.wp)) return void toast.error("Leitura atual não pode ser menor que a anterior");
     setSaving(true);
     try {
       const attachment_path = file ? await uploadAnexo(unitId, file, `fatura-${month}`) : undefined;
