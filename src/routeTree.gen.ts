@@ -10,33 +10,132 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedConsumoRouteImport } from './routes/_authenticated/consumo'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedUnidadesRouteImport } from './routes/_authenticated/unidades'
+import { Route as AuthenticatedOrdensIndexRouteImport } from './routes/_authenticated/ordens.index'
+import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedConsumoRoute = AuthenticatedConsumoRouteImport.update({
+  id: '/consumo',
+  path: '/consumo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUnidadesRoute = AuthenticatedUnidadesRouteImport.update({
+  id: '/unidades',
+  path: '/unidades',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOrdensIndexRoute =
+  AuthenticatedOrdensIndexRouteImport.update({
+    id: '/ordens/',
+    path: '/ordens/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdensIdRoute = AuthenticatedOrdensIdRouteImport.update({
+  id: '/ordens/$id',
+  path: '/ordens/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/consumo': typeof AuthenticatedConsumoRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/unidades': typeof AuthenticatedUnidadesRoute
+  '/ordens/$id': typeof AuthenticatedOrdensIdRoute
+  '/ordens/': typeof AuthenticatedOrdensIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/consumo': typeof AuthenticatedConsumoRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/unidades': typeof AuthenticatedUnidadesRoute
+  '/ordens/$id': typeof AuthenticatedOrdensIdRoute
+  '/ordens': typeof AuthenticatedOrdensIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/consumo': typeof AuthenticatedConsumoRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/unidades': typeof AuthenticatedUnidadesRoute
+  '/_authenticated/ordens/$id': typeof AuthenticatedOrdensIdRoute
+  '/_authenticated/ordens/': typeof AuthenticatedOrdensIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/consumo'
+    | '/dashboard'
+    | '/unidades'
+    | '/ordens/$id'
+    | '/ordens/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/consumo'
+    | '/dashboard'
+    | '/unidades'
+    | '/ordens/$id'
+    | '/ordens'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/reset-password'
+    | '/_authenticated/consumo'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/unidades'
+    | '/_authenticated/ordens/$id'
+    | '/_authenticated/ordens/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +147,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/consumo': {
+      id: '/_authenticated/consumo'
+      path: '/consumo'
+      fullPath: '/consumo'
+      preLoaderRoute: typeof AuthenticatedConsumoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/unidades': {
+      id: '/_authenticated/unidades'
+      path: '/unidades'
+      fullPath: '/unidades'
+      preLoaderRoute: typeof AuthenticatedUnidadesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens/': {
+      id: '/_authenticated/ordens/'
+      path: '/ordens'
+      fullPath: '/ordens/'
+      preLoaderRoute: typeof AuthenticatedOrdensIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens/$id': {
+      id: '/_authenticated/ordens/$id'
+      path: '/ordens/$id'
+      fullPath: '/ordens/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedConsumoRoute: typeof AuthenticatedConsumoRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedUnidadesRoute: typeof AuthenticatedUnidadesRoute
+  AuthenticatedOrdensIdRoute: typeof AuthenticatedOrdensIdRoute
+  AuthenticatedOrdensIndexRoute: typeof AuthenticatedOrdensIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedConsumoRoute: AuthenticatedConsumoRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedUnidadesRoute: AuthenticatedUnidadesRoute,
+  AuthenticatedOrdensIdRoute: AuthenticatedOrdensIdRoute,
+  AuthenticatedOrdensIndexRoute: AuthenticatedOrdensIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
