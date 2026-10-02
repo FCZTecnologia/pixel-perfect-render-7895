@@ -181,7 +181,7 @@ function UnitsPage() {
                 </Select>
               </div>
               <div className="space-y-1 sm:col-span-2"><Label>Condômino / Empresa</Label><Input value={f.owner_name} onChange={(e) => upd({ owner_name: e.target.value })} /></div>
-              <div className="space-y-1 sm:col-span-2"><Label>E-mail de acesso</Label><Input type="email" value={f.email} onChange={(e) => upd({ email: e.target.value })} /></div>
+              <div className="space-y-1 sm:col-span-2"><Label>E-mail de contato</Label><Input type="email" value={f.email} onChange={(e) => upd({ email: e.target.value })} /></div>
               <div className="space-y-1"><Label>Telefone</Label><Input value={f.phone} onChange={(e) => upd({ phone: e.target.value })} /></div>
               <div className="space-y-1"><Label>CPF / CNPJ</Label><Input value={f.document} onChange={(e) => upd({ document: e.target.value })} /></div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2"><Switch checked={f.active} onCheckedChange={(c) => upd({ active: c })} /> Unidade ativa</label>
