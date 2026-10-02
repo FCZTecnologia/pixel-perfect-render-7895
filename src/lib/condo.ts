@@ -58,3 +58,46 @@ export async function openAnexo(path: string) {
   if (error || !data) throw error ?? new Error("Arquivo indisponível");
   window.open(data.signedUrl, "_blank", "noopener");
 }
+
+export const LOGIN_DOMAIN = "condomio.app";
+export const toLoginEmail = (v: string) => {
+  const s = v.trim().toLowerCase();
+  return s.includes("@") ? s : `${s}@${LOGIN_DOMAIN}`;
+};
+
+const esc = (v: unknown) =>
+  String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+export async function exportUnitReport(unit: Unit) {
+  const [c, o, s] = await Promise.all([
+    supabase.from("consumption").select("*").eq("unit_id", unit.id).order("reference_month"),
+    supabase.from("service_orders").select("*, os_messages(*)").eq("unit_id", unit.id).order("created_at"),
+    supabase.from("suggestions").select("*").eq("unit_id", unit.id).order("created_at"),
+  ]);
+  if (c.error) throw c.error;
+  if (o.error) throw o.error;
+  if (s.error) throw s.error;
+  const row = (cells: unknown[]) => `<tr>${cells.map((x) => `<td>${esc(x)}</td>`).join("")}</tr>`;
+  const head = (cells: string[]) => `<tr>${cells.map((x) => `<th>${x}</th>`).join("")}</tr>`;
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Encerramento ${esc(unit.identifier)}</title>
+<style>body{font-family:system-ui,sans-serif;margin:32px;color:#111}table{border-collapse:collapse;width:100%;margin:8px 0 24px;font-size:13px}td,th{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}th{background:#f2f2f2}h1{margin-bottom:4px}</style></head><body>
+<h1>Relatório de encerramento de contrato</h1>
+<p>Gerado em ${esc(new Date().toLocaleString("pt-BR"))}</p>
+<h2>Unidade</h2><table>
+${row(["Identificação", unit.identifier])}${row(["Tipo", unitTypeLabel[unit.unit_type]])}${row(["Condômino / Empresa", unit.owner_name])}
+${row(["CPF / CNPJ", unit.document])}${row(["E-mail", unit.email])}${row(["Telefone", unit.phone])}${row(["Usuário de acesso", unit.username])}
+${row(["Início do vínculo", dateLabel(unit.created_at)])}${row(["Encerramento", new Date().toLocaleDateString("pt-BR")])}</table>
+<h2>Consumo (${c.data.length})</h2><table>${head(["Mês", "Energia ant.", "Energia atual", "kWh", "Climat. ant.", "Climat. atual", "kWh", "Água/Gás ant.", "Água/Gás atual", "m³", "Total"])}
+${c.data.map((r) => row([monthLabel(r.reference_month), num(r.energy_prev), num(r.energy_curr), num(r.energy_curr - r.energy_prev), num(r.hvac_prev), num(r.hvac_curr), num(r.hvac_curr - r.hvac_prev), num(r.water_prev), num(r.water_curr), num(r.water_curr - r.water_prev), brl(r.total_amount)])).join("")}</table>
+<h2>Ordens de serviço (${o.data.length})</h2>
+${o.data.map((x) => `<h3>OS-${x.number} · ${esc(x.title)}</h3><table>${row(["Aberta em", dateLabel(x.created_at)])}${row(["Categoria", x.category])}${row(["Prioridade", priorityLabel[x.priority]])}${row(["Status", statusLabel[x.status]])}${row(["Descrição", x.description])}</table>
+${x.os_messages?.length ? `<table>${head(["Data", "Autor", "Mensagem"])}${[...x.os_messages].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((m) => row([new Date(m.created_at).toLocaleString("pt-BR"), m.from_admin ? "Administração" : "Condômino", m.message])).join("")}</table>` : ""}`).join("")}
+<h2>Sugestões (${s.data.length})</h2><table>${head(["Data", "Mensagem"])}${s.data.map((x) => row([new Date(x.created_at).toLocaleString("pt-BR"), x.message])).join("")}</table>
+</body></html>`;
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `encerramento-${unit.identifier.replace(/\W+/g, "-")}-${new Date().toISOString().slice(0, 10)}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
