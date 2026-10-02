@@ -20,11 +20,15 @@ const adminNav = [
   { to: "/unidades", label: "Unidades" },
   { to: "/consumo", label: "Consumo" },
   { to: "/ordens", label: "Ordens de serviço" },
+  { to: "/avisos", label: "Avisos" },
+  { to: "/sugestoes", label: "Sugestões" },
 ] as const;
 const tenantNav = [
   { to: "/dashboard", label: "Visão geral" },
   { to: "/consumo", label: "Contas de consumo" },
   { to: "/ordens", label: "Ordens de serviço" },
+  { to: "/avisos", label: "Avisos" },
+  { to: "/sugestoes", label: "Sugestões" },
 ] as const;
 
 function Shell() {

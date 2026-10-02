@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { unitTypeLabel, type Unit, type UnitType } from "@/lib/condo";
+import { exportUnitReport, unitTypeLabel, type Unit, type UnitType } from "@/lib/condo";
+import { useServerFn } from "@tanstack/react-start";
+import { setTenantLogin, terminateUnit } from "@/lib/tenants.functions";
 
 export const Route = createFileRoute("/_authenticated/unidades")({
   beforeLoad: ({ context }) => {
@@ -37,6 +39,44 @@ function UnitsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<{ id?: string; form: Form } | null>(null);
+  const [login, setLogin] = useState<{ unit: Unit; username: string; password: string } | null>(null);
+  const [ending, setEnding] = useState<Unit | null>(null);
+  const [busy, setBusy] = useState(false);
+  const setLoginFn = useServerFn(setTenantLogin);
+  const terminateFn = useServerFn(terminateUnit);
+
+  async function saveLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!login) return;
+    setBusy(true);
+    try {
+      await setLoginFn({ data: { unitId: login.unit.id, username: login.username, password: login.password } });
+      toast.success("Acesso salvo");
+      setLogin(null);
+      qc.invalidateQueries();
+    } catch (err) {
+      const m = err instanceof Error ? err.message : "Erro";
+      toast.error(m.startsWith("[") ? "Verifique usuário (3+ caracteres) e senha (6+)" : m);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function terminate() {
+    if (!ending) return;
+    setBusy(true);
+    try {
+      await exportUnitReport(ending);
+      await terminateFn({ data: { unitId: ending.id } });
+      toast.success("Contrato encerrado e unidade inativada");
+      setEnding(null);
+      qc.invalidateQueries();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao encerrar");
+    } finally {
+      setBusy(false);
+    }
+  }
   const { data: units = [] } = useQuery({
     queryKey: ["units"],
     queryFn: async () => {
@@ -103,11 +143,20 @@ function UnitsPage() {
                 </td>
                 <td className="px-5 py-3">
                   <span className={u.active ? "rounded-full bg-success/15 px-2.5 py-1 text-[11px] font-medium text-success" : "rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground"}>
-                    {u.active ? "Ativo" : "Inativo"}
+                    {u.terminated_at ? "Encerrado" : u.active ? "Ativo" : "Inativo"}
                   </span>
+                  <div className="mt-1 text-xs text-muted-foreground">{u.username ? `Usuário: ${u.username}` : "Sem acesso"}</div>
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <Button variant="outline" size="sm" onClick={() => open(u)}>Editar</Button>
+                  {u.terminated_at ? (
+                    <Button variant="outline" size="sm" onClick={() => exportUnitReport(u).catch(() => toast.error("Falha ao exportar"))}>Exportar</Button>
+                  ) : (
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => open(u)}>Editar</Button>
+                      <Button variant="outline" size="sm" onClick={() => setLogin({ unit: u, username: u.username ?? "", password: "" })}>Acesso</Button>
+                      <Button variant="outline" size="sm" className="text-destructive" onClick={() => setEnding(u)}>Encerrar contrato</Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
@@ -132,13 +181,38 @@ function UnitsPage() {
                 </Select>
               </div>
               <div className="space-y-1 sm:col-span-2"><Label>Condômino / Empresa</Label><Input value={f.owner_name} onChange={(e) => upd({ owner_name: e.target.value })} /></div>
-              <div className="space-y-1 sm:col-span-2"><Label>E-mail de acesso</Label><Input type="email" value={f.email} onChange={(e) => upd({ email: e.target.value })} /></div>
+              <div className="space-y-1 sm:col-span-2"><Label>E-mail de contato</Label><Input type="email" value={f.email} onChange={(e) => upd({ email: e.target.value })} /></div>
               <div className="space-y-1"><Label>Telefone</Label><Input value={f.phone} onChange={(e) => upd({ phone: e.target.value })} /></div>
               <div className="space-y-1"><Label>CPF / CNPJ</Label><Input value={f.document} onChange={(e) => upd({ document: e.target.value })} /></div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2"><Switch checked={f.active} onCheckedChange={(c) => upd({ active: c })} /> Unidade ativa</label>
               <Button type="submit" className="sm:col-span-2">Salvar</Button>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!login} onOpenChange={(o) => !o && setLogin(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Acesso do condômino · {login?.unit.identifier}</DialogTitle></DialogHeader>
+          {login && (
+            <form onSubmit={saveLogin} className="space-y-3">
+              <div className="space-y-1"><Label>Usuário</Label><Input value={login.username} onChange={(e) => setLogin({ ...login, username: e.target.value })} placeholder="galpao01" /></div>
+              <div className="space-y-1"><Label>{login.unit.username ? "Nova senha" : "Senha"}</Label><Input type="text" value={login.password} onChange={(e) => setLogin({ ...login, password: e.target.value })} /></div>
+              <p className="text-xs text-muted-foreground">Entregue o usuário e a senha ao condômino. Ele entra com esses dados na tela de login.</p>
+              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando…" : "Salvar acesso"}</Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!ending} onOpenChange={(o) => !o && setEnding(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Encerrar contrato · {ending?.identifier}</DialogTitle></DialogHeader>
+          <p className="text-sm text-foreground/70">
+            Vamos baixar um relatório com todos os dados da unidade, consumos, ordens de serviço e sugestões desde o início do vínculo.
+            Depois a unidade será inativada e o acesso do condômino bloqueado. Para uma nova locação, crie um novo cadastro.
+          </p>
+          <Button variant="destructive" disabled={busy} onClick={terminate}>{busy ? "Encerrando…" : "Exportar e encerrar"}</Button>
         </DialogContent>
       </Dialog>
     </>

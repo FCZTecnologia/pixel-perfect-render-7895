@@ -13,8 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAvisosRouteImport } from './routes/_authenticated/avisos'
 import { Route as AuthenticatedConsumoRouteImport } from './routes/_authenticated/consumo'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedSugestoesRouteImport } from './routes/_authenticated/sugestoes'
 import { Route as AuthenticatedUnidadesRouteImport } from './routes/_authenticated/unidades'
 import { Route as AuthenticatedOrdensIndexRouteImport } from './routes/_authenticated/ordens.index'
 import { Route as AuthenticatedOrdensIdRouteImport } from './routes/_authenticated/ordens.$id'
@@ -38,6 +40,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAvisosRoute = AuthenticatedAvisosRouteImport.update({
+  id: '/avisos',
+  path: '/avisos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedConsumoRoute = AuthenticatedConsumoRouteImport.update({
   id: '/consumo',
   path: '/consumo',
@@ -46,6 +53,11 @@ const AuthenticatedConsumoRoute = AuthenticatedConsumoRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSugestoesRoute = AuthenticatedSugestoesRouteImport.update({
+  id: '/sugestoes',
+  path: '/sugestoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedUnidadesRoute = AuthenticatedUnidadesRouteImport.update({
@@ -69,8 +81,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/avisos': typeof AuthenticatedAvisosRoute
   '/consumo': typeof AuthenticatedConsumoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/sugestoes': typeof AuthenticatedSugestoesRoute
   '/unidades': typeof AuthenticatedUnidadesRoute
   '/ordens/$id': typeof AuthenticatedOrdensIdRoute
   '/ordens/': typeof AuthenticatedOrdensIndexRoute
@@ -79,8 +93,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/avisos': typeof AuthenticatedAvisosRoute
   '/consumo': typeof AuthenticatedConsumoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/sugestoes': typeof AuthenticatedSugestoesRoute
   '/unidades': typeof AuthenticatedUnidadesRoute
   '/ordens/$id': typeof AuthenticatedOrdensIdRoute
   '/ordens': typeof AuthenticatedOrdensIndexRoute
@@ -91,8 +107,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/avisos': typeof AuthenticatedAvisosRoute
   '/_authenticated/consumo': typeof AuthenticatedConsumoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/sugestoes': typeof AuthenticatedSugestoesRoute
   '/_authenticated/unidades': typeof AuthenticatedUnidadesRoute
   '/_authenticated/ordens/$id': typeof AuthenticatedOrdensIdRoute
   '/_authenticated/ordens/': typeof AuthenticatedOrdensIndexRoute
@@ -103,8 +121,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/avisos'
     | '/consumo'
     | '/dashboard'
+    | '/sugestoes'
     | '/unidades'
     | '/ordens/$id'
     | '/ordens/'
@@ -113,8 +133,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/avisos'
     | '/consumo'
     | '/dashboard'
+    | '/sugestoes'
     | '/unidades'
     | '/ordens/$id'
     | '/ordens'
@@ -124,8 +146,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/avisos'
     | '/_authenticated/consumo'
     | '/_authenticated/dashboard'
+    | '/_authenticated/sugestoes'
     | '/_authenticated/unidades'
     | '/_authenticated/ordens/$id'
     | '/_authenticated/ordens/'
@@ -168,6 +192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/avisos': {
+      id: '/_authenticated/avisos'
+      path: '/avisos'
+      fullPath: '/avisos'
+      preLoaderRoute: typeof AuthenticatedAvisosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/consumo': {
       id: '/_authenticated/consumo'
       path: '/consumo'
@@ -180,6 +211,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sugestoes': {
+      id: '/_authenticated/sugestoes'
+      path: '/sugestoes'
+      fullPath: '/sugestoes'
+      preLoaderRoute: typeof AuthenticatedSugestoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/unidades': {
@@ -207,16 +245,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAvisosRoute: typeof AuthenticatedAvisosRoute
   AuthenticatedConsumoRoute: typeof AuthenticatedConsumoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSugestoesRoute: typeof AuthenticatedSugestoesRoute
   AuthenticatedUnidadesRoute: typeof AuthenticatedUnidadesRoute
   AuthenticatedOrdensIdRoute: typeof AuthenticatedOrdensIdRoute
   AuthenticatedOrdensIndexRoute: typeof AuthenticatedOrdensIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAvisosRoute: AuthenticatedAvisosRoute,
   AuthenticatedConsumoRoute: AuthenticatedConsumoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSugestoesRoute: AuthenticatedSugestoesRoute,
   AuthenticatedUnidadesRoute: AuthenticatedUnidadesRoute,
   AuthenticatedOrdensIdRoute: AuthenticatedOrdensIdRoute,
   AuthenticatedOrdensIndexRoute: AuthenticatedOrdensIndexRoute,

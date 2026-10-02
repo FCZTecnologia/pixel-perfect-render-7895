@@ -67,6 +67,27 @@ export type Database = {
           },
         ]
       }
+      notices: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       os_messages: {
         Row: {
           author_id: string
@@ -155,6 +176,41 @@ export type Database = {
           },
         ]
       }
+      suggestions: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          unit_id: string
+        }
+        Insert: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          unit_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           active: boolean
@@ -163,9 +219,12 @@ export type Database = {
           email: string
           id: string
           identifier: string
+          login_user_id: string | null
           owner_name: string
           phone: string | null
+          terminated_at: string | null
           unit_type: Database["public"]["Enums"]["unit_type"]
+          username: string | null
         }
         Insert: {
           active?: boolean
@@ -174,9 +233,12 @@ export type Database = {
           email: string
           id?: string
           identifier: string
+          login_user_id?: string | null
           owner_name: string
           phone?: string | null
+          terminated_at?: string | null
           unit_type?: Database["public"]["Enums"]["unit_type"]
+          username?: string | null
         }
         Update: {
           active?: boolean
@@ -185,9 +247,12 @@ export type Database = {
           email?: string
           id?: string
           identifier?: string
+          login_user_id?: string | null
           owner_name?: string
           phone?: string | null
+          terminated_at?: string | null
           unit_type?: Database["public"]["Enums"]["unit_type"]
+          username?: string | null
         }
         Relationships: []
       }

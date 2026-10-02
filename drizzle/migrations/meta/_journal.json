@@ -15,6 +15,13 @@
       "when": 1790883286768,
       "tag": "0001_add_climatizacao",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790943225979,
+      "tag": "0002_tenant_logins_suggestions_notices",
+      "breakpoints": true
     }
   ]
 }
