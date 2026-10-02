@@ -15,15 +15,16 @@ function useData() {
   return useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
-      const [u, c, o] = await Promise.all([
+      const [u, n, c, o] = await Promise.all([
         supabase.from("units").select("*").order("identifier"),
+        supabase.from("notices").select("*").order("created_at", { ascending: false }).limit(3),
         supabase.from("consumption").select("*").order("reference_month", { ascending: false }),
         supabase.from("service_orders").select("*, units(identifier)").order("created_at", { ascending: false }),
       ]);
       if (u.error) throw u.error;
       if (c.error) throw c.error;
       if (o.error) throw o.error;
-      return { units: u.data, consumption: c.data, orders: o.data };
+      return { units: u.data, notices: n.data ?? [], consumption: c.data, orders: o.data };
     },
   });
 }
@@ -49,6 +50,7 @@ function AdminHome() {
   const latest = data?.consumption[0]?.reference_month;
   const monthRows = (data?.consumption ?? []).filter((c) => c.reference_month === latest);
   const kwh = monthRows.reduce((s, c) => s + (c.energy_curr - c.energy_prev), 0);
+  const hvac = monthRows.reduce((s, c) => s + (c.hvac_curr - c.hvac_prev), 0);
   const m3 = monthRows.reduce((s, c) => s + (c.water_curr - c.water_prev), 0);
   const open = (data?.orders ?? []).filter((o) => o.status === "pendente" || o.status === "em_andamento");
   const highOpen = open.filter((o) => o.priority === "alta").length;
@@ -58,9 +60,10 @@ function AdminHome() {
       <PageHeader eyebrow="Painel administrativo" title="Visão geral">
         <div className="glass-strong rounded-xl px-4 py-2.5 text-sm text-foreground/70">{latest ? monthLabel(latest) : "Sem leituras"}</div>
       </PageHeader>
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Stat label="Unidades ativas" value={String(units.filter((u) => u.active).length)} note={`${units.length} cadastradas`} />
         <Stat label="Consumo de energia" value={`${num(kwh)} kWh`} note="mês mais recente" tone="highlight" />
+        <Stat label="Consumo de climatização" value={`${num(hvac)} kWh`} note="mês mais recente" />
         <Stat label="Consumo de água/gás" value={`${num(m3)} m³`} note="mês mais recente" />
         <Stat label="Ordens abertas" value={String(open.length)} note={`${highOpen} de alta prioridade`} tone="highlight" />
       </div>
@@ -157,6 +160,20 @@ function TenantHome() {
                 </Link>
               ))}
             </div>
+          </Panel>
+          <Panel className="lg:col-span-3">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-semibold">Avisos da administração</h2>
+              <Link to="/avisos" className="text-xs text-primary">Ver todos</Link>
+            </div>
+            {(data?.notices ?? []).map((a) => (
+              <div key={a.id} className="border-t border-glass-border py-3 first:border-t-0">
+                <div className="text-xs text-muted-foreground">{dateLabel(a.created_at)}</div>
+                <div className="font-medium">{a.title}</div>
+                {a.body && <p className="mt-1 line-clamp-2 text-sm text-foreground/70">{a.body}</p>}
+              </div>
+            ))}
+            {data && data.notices.length === 0 && <p className="text-sm text-muted-foreground">Nenhum aviso no momento.</p>}
           </Panel>
         </div>
       )}
