@@ -5,7 +5,7 @@ export function Brand({ subtitle }: { subtitle?: string }) {
         Co
       </div>
       <div>
-        <div className="font-display font-semibold leading-none">Condomio</div>
+        <div className="font-display font-semibold leading-none">Painel Bandeiras Empresarial</div>
         {subtitle && <div className="mt-1 text-[11px] text-muted-foreground">{subtitle}</div>}
       </div>
     </div>

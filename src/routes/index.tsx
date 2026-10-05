@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
 });
 
 const stats = [
-  { k: "Unidades", v: "Galpões, salas e apartamentos" },
+  { k: "Unidades", v: "Galpões e salas " },
   { k: "Consumo", v: "Energia (kWh) e água (m³) por mês" },
   { k: "Ordens de serviço", v: "Chamados com status e respostas" },
 ];
@@ -26,18 +26,18 @@ function Index() {
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6 lg:px-8">
       <header className="flex items-center justify-between">
-        <Brand subtitle="Gestão de condomínios" />
+        <Brand subtitle="Gestão de condomínos" />
         <Button asChild variant="outline">
           <Link to="/auth">Entrar</Link>
         </Button>
       </header>
       <main className="flex flex-1 flex-col justify-center py-16">
-        <div className="text-xs font-medium uppercase tracking-[0.2em] text-primary">Comercial · Industrial · Residencial</div>
+        <div className="text-xs font-medium uppercase tracking-[0.2em] text-primary">COMERCIAL · INDUSTRIAL </div>
         <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-balance lg:text-6xl">
           O condomínio inteiro, em um painel claro.
         </h1>
         <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-          Administradores lançam leituras e respondem chamados. Condôminos acompanham faturas e abrem ordens de serviço.
+          Acesso ao painel condomino Bandeiras Empresarial
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg" variant="highlight">
