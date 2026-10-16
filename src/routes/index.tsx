@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
 
 const stats = [
   { k: "Unidades", v: "Galpões e salas " },
-  { k: "Consumo", v: "Energia (kWh) e água (m³) por mês" },
+  { k: "Consumo", v: "Energia (kWh) , Climatização (kWh) e água (m³) por mês" },
   { k: "Ordens de serviço", v: "Chamados com status e respostas" },
 ];
 
