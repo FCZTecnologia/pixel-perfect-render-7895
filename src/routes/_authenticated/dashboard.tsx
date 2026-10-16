@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { ConsumptionForm } from "@/components/ConsumptionForm";
-import { brl, dateLabel, monthLabel, num, openAnexo, unitTypeLabel } from "@/lib/condo";
+import { brl, dateLabel, monthLabel, num, openAnexo, unitTypeLabel, utilityLabel, utilityUnit } from "@/lib/condo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Visão geral — Condomio" }] }),
@@ -18,7 +18,7 @@ function useData() {
       const [u, n, c, o] = await Promise.all([
         supabase.from("units").select("*").order("identifier"),
         supabase.from("notices").select("*").order("created_at", { ascending: false }).limit(3),
-        supabase.from("consumption").select("*").order("reference_month", { ascending: false }),
+        supabase.from("consumption_bills").select("*").order("reference_month", { ascending: false }),
         supabase.from("service_orders").select("*, units(identifier)").order("created_at", { ascending: false }),
       ]);
       if (u.error) throw u.error;
@@ -49,9 +49,8 @@ function AdminHome() {
   const units = data?.units ?? [];
   const latest = data?.consumption[0]?.reference_month;
   const monthRows = (data?.consumption ?? []).filter((c) => c.reference_month === latest);
-  const kwh = monthRows.reduce((s, c) => s + (c.energy_curr - c.energy_prev), 0);
-  const hvac = monthRows.reduce((s, c) => s + (c.hvac_curr - c.hvac_prev), 0);
-  const m3 = monthRows.reduce((s, c) => s + (c.water_curr - c.water_prev), 0);
+  const sum = (k: string) => monthRows.filter((c) => c.kind === k).reduce((s, c) => s + (c.reading_curr - c.reading_prev), 0);
+  const kwh = sum("energia"), hvac = sum("climatizacao"), m3 = sum("agua");
   const open = (data?.orders ?? []).filter((o) => o.status === "pendente" || o.status === "em_andamento");
   const highOpen = open.filter((o) => o.priority === "alta").length;
 
@@ -99,7 +98,8 @@ function AdminHome() {
 function TenantHome() {
   const { data } = useData();
   const unit = data?.units[0];
-  const bill = data?.consumption[0];
+  const latestMonth = data?.consumption[0]?.reference_month;
+  const bills = (data?.consumption ?? []).filter((c) => c.reference_month === latestMonth);
   const open = (data?.orders ?? []).filter((o) => o.status === "pendente" || o.status === "em_andamento");
 
   if (data && !unit) {
@@ -134,16 +134,18 @@ function TenantHome() {
           </Panel>
           <Panel>
             <div className="text-xs text-muted-foreground">Fatura mais recente</div>
-            {bill ? (
+            {bills.length ? (
               <>
-                <div className="mt-1 font-display text-3xl font-semibold">{brl(bill.total_amount)}</div>
-                <div className="mt-1 text-sm text-foreground/70">{monthLabel(bill.reference_month)}</div>
-                <div className="mt-3 text-xs text-muted-foreground">
-                  {num(bill.energy_curr - bill.energy_prev)} kWh energia · {num(bill.hvac_curr - bill.hvac_prev)} kWh climatização · {num(bill.water_curr - bill.water_prev)} m³
+                <div className="mt-1 font-display text-3xl font-semibold">{brl(bills.reduce((t, b) => t + Number(b.amount), 0))}</div>
+                <div className="mt-1 text-sm text-foreground/70">{monthLabel(latestMonth!)}</div>
+                <div className="mt-3 space-y-2">
+                  {bills.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="text-muted-foreground">{utilityLabel[b.kind]} · {num(b.reading_curr - b.reading_prev)} {utilityUnit[b.kind]} · {brl(b.amount)}</span>
+                      {b.attachment_path && <Button variant="outline" size="sm" onClick={() => openAnexo(b.attachment_path!)}>Fatura</Button>}
+                    </div>
+                  ))}
                 </div>
-                {bill.attachment_path && (
-                  <Button variant="outline" size="sm" className="mt-4" onClick={() => openAnexo(bill.attachment_path!)}>Baixar fatura</Button>
-                )}
               </>
             ) : (
               <p className="mt-2 text-sm text-muted-foreground">Nenhuma fatura lançada.</p>

@@ -6,48 +6,46 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { num, uploadAnexo, type Unit } from "@/lib/condo";
+import { num, uploadAnexo, utilityKinds, utilityLabel, utilityUnit, type Unit, type UtilityKind } from "@/lib/condo";
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
 export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: boolean }) {
   const qc = useQueryClient();
   const [unitId, setUnitId] = useState("");
+  const [kind, setKind] = useState<UtilityKind>("energia");
   const [month, setMonth] = useState(thisMonth());
-  const [v, setV] = useState({ ep: "", ec: "", wp: "", wc: "", hp: "", hc: "", total: "" });
+  const [v, setV] = useState({ prev: "", curr: "", amount: "" });
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const n = (s: string) => Number(s.replace(",", ".")) || 0;
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV({ ...v, [k]: e.target.value });
 
-  async function prefillPrev(id: string) {
-    setUnitId(id);
-    const { data } = await supabase.from("consumption").select("energy_curr, water_curr, hvac_curr").eq("unit_id", id).order("reference_month", { ascending: false }).limit(1);
-    const last = data?.[0]; if (last) setV((p) => ({ ...p, ep: String(last.energy_curr), wp: String(last.water_curr), hp: String(last.hvac_curr) }));
+  async function prefill(id: string, k: UtilityKind) {
+    setUnitId(id); setKind(k);
+    if (!id) return;
+    const { data } = await supabase.from("consumption_bills").select("reading_curr").eq("unit_id", id).eq("kind", k).order("reference_month", { ascending: false }).limit(1);
+    setV((p) => ({ ...p, prev: data?.[0] ? String(data[0].reading_curr) : "" }));
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!unitId) return void toast.error("Selecione a unidade");
-    if (n(v.ec) < n(v.ep) || n(v.wc) < n(v.wp) || n(v.hc) < n(v.hp)) return void toast.error("Leitura atual não pode ser menor que a anterior");
+    if (n(v.curr) < n(v.prev)) return void toast.error("Leitura atual não pode ser menor que a anterior");
     setSaving(true);
     try {
-      const attachment_path = file ? await uploadAnexo(unitId, file, `fatura-${month}`) : undefined;
-      const { error } = await supabase.from("consumption").upsert(
+      const attachment_path = file ? await uploadAnexo(unitId, file, `fatura-${kind}-${month}`) : undefined;
+      const { error } = await supabase.from("consumption_bills").upsert(
         {
-          unit_id: unitId,
-          reference_month: `${month}-01`,
-          energy_prev: n(v.ep), energy_curr: n(v.ec),
-          water_prev: n(v.wp), water_curr: n(v.wc),
-          hvac_prev: n(v.hp), hvac_curr: n(v.hc),
-          total_amount: n(v.total),
+          unit_id: unitId, kind, reference_month: `${month}-01`,
+          reading_prev: n(v.prev), reading_curr: n(v.curr), amount: n(v.amount),
           ...(attachment_path ? { attachment_path } : {}),
         },
-        { onConflict: "unit_id,reference_month" },
+        { onConflict: "unit_id,reference_month,kind" },
       );
       if (error) throw error;
-      toast.success("Leitura registrada");
-      setV({ ep: "", ec: "", wp: "", wc: "", hp: "", hc: "", total: "" });
+      toast.success(`${utilityLabel[kind]} registrada`);
+      setV({ prev: "", curr: "", amount: "" });
       setFile(null);
       qc.invalidateQueries();
     } catch (err) {
@@ -58,12 +56,21 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
   }
 
   const field = "glass-strong";
+  const grid = compact ? "space-y-3" : "grid gap-3 sm:grid-cols-2";
   return (
     <form onSubmit={save} className="space-y-3">
-      <div className={compact ? "space-y-3" : "grid gap-3 sm:grid-cols-2"}>
+      <div className="grid grid-cols-3 gap-1 rounded-xl glass-strong p-1">
+        {utilityKinds.map((k) => (
+          <button key={k} type="button" onClick={() => prefill(unitId, k)}
+            className={k === kind ? "rounded-lg bg-primary px-2 py-1.5 text-xs font-semibold text-primary-foreground" : "rounded-lg px-2 py-1.5 text-xs text-muted-foreground"}>
+            {utilityLabel[k]}
+          </button>
+        ))}
+      </div>
+      <div className={grid}>
         <div className="space-y-1">
           <Label className="text-[11px] text-muted-foreground">Unidade</Label>
-          <Select value={unitId} onValueChange={prefillPrev}>
+          <Select value={unitId} onValueChange={(id) => prefill(id, kind)}>
             <SelectTrigger className={field}><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>
               {units.filter((u) => !u.terminated_at && u.active).map((u) => <SelectItem key={u.id} value={u.id}>{u.identifier} — {u.owner_name}</SelectItem>)}
@@ -76,31 +83,21 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
         </div>
       </div>
       <fieldset className="grid grid-cols-2 gap-3">
-        <legend className="mb-1 text-xs font-semibold text-primary">Energia (kWh) · consumo {num(Math.max(0, n(v.ec) - n(v.ep)))}</legend>
-        <Input inputMode="decimal" placeholder="Leitura anterior" value={v.ep} onChange={set("ep")} className={field} />
-        <Input inputMode="decimal" placeholder="Leitura atual" value={v.ec} onChange={set("ec")} className={field} />
+        <legend className="mb-1 text-xs font-semibold text-primary">{utilityLabel[kind]} ({utilityUnit[kind]}) · consumo {num(Math.max(0, n(v.curr) - n(v.prev)))}</legend>
+        <Input inputMode="decimal" placeholder="Leitura anterior" value={v.prev} onChange={set("prev")} className={field} />
+        <Input inputMode="decimal" placeholder="Leitura atual" value={v.curr} onChange={set("curr")} className={field} />
       </fieldset>
-      <fieldset className="grid grid-cols-2 gap-3">
-        <legend className="mb-1 text-xs font-semibold text-primary">Climatização (kWh) · consumo {num(Math.max(0, n(v.hc) - n(v.hp)))}</legend>
-        <Input inputMode="decimal" placeholder="Leitura anterior" value={v.hp} onChange={set("hp")} className={field} />
-        <Input inputMode="decimal" placeholder="Leitura atual" value={v.hc} onChange={set("hc")} className={field} />
-      </fieldset>
-      <fieldset className="grid grid-cols-2 gap-3">
-        <legend className="mb-1 text-xs font-semibold text-primary">Água/Gás (m³) · consumo {num(Math.max(0, n(v.wc) - n(v.wp)))}</legend>
-        <Input inputMode="decimal" placeholder="Leitura anterior" value={v.wp} onChange={set("wp")} className={field} />
-        <Input inputMode="decimal" placeholder="Leitura atual" value={v.wc} onChange={set("wc")} className={field} />
-      </fieldset>
-      <div className={compact ? "space-y-3" : "grid gap-3 sm:grid-cols-2"}>
+      <div className={grid}>
         <div className="space-y-1">
-          <Label className="text-[11px] text-muted-foreground">Valor total (R$)</Label>
-          <Input inputMode="decimal" placeholder="0,00" value={v.total} onChange={set("total")} className={field} />
+          <Label className="text-[11px] text-muted-foreground">Valor (R$)</Label>
+          <Input inputMode="decimal" placeholder="0,00" value={v.amount} onChange={set("amount")} className={field} />
         </div>
         <div className="space-y-1">
           <Label className="text-[11px] text-muted-foreground">Boleto / fatura (PDF ou imagem)</Label>
           <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className={field} />
         </div>
       </div>
-      <Button type="submit" variant="highlight" className="w-full" disabled={saving}>{saving ? "Salvando…" : "Registrar leitura"}</Button>
+      <Button type="submit" variant="highlight" className="w-full" disabled={saving}>{saving ? "Salvando…" : `Registrar ${utilityLabel[kind].toLowerCase()}`}</Button>
     </form>
   );
 }

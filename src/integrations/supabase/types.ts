@@ -67,6 +67,50 @@ export type Database = {
           },
         ]
       }
+      consumption_bills: {
+        Row: {
+          amount: number
+          attachment_path: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["utility_kind"]
+          reading_curr: number
+          reading_prev: number
+          reference_month: string
+          unit_id: string
+        }
+        Insert: {
+          amount?: number
+          attachment_path?: string | null
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["utility_kind"]
+          reading_curr?: number
+          reading_prev?: number
+          reference_month: string
+          unit_id: string
+        }
+        Update: {
+          amount?: number
+          attachment_path?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["utility_kind"]
+          reading_curr?: number
+          reading_prev?: number
+          reference_month?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumption_bills_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notices: {
         Row: {
           body: string
@@ -295,6 +339,7 @@ export type Database = {
       os_priority: "baixa" | "media" | "alta"
       os_status: "pendente" | "em_andamento" | "concluido" | "cancelado"
       unit_type: "galpao" | "sala_comercial" | "residencial"
+      utility_kind: "energia" | "agua" | "climatizacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -426,6 +471,7 @@ export const Constants = {
       os_priority: ["baixa", "media", "alta"],
       os_status: ["pendente", "em_andamento", "concluido", "cancelado"],
       unit_type: ["galpao", "sala_comercial", "residencial"],
+      utility_kind: ["energia", "agua", "climatizacao"],
     },
   },
 } as const

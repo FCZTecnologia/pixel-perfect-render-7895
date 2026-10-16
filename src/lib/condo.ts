@@ -70,7 +70,7 @@ const esc = (v: unknown) =>
 
 export async function exportUnitReport(unit: Unit) {
   const [c, o, s] = await Promise.all([
-    supabase.from("consumption").select("*").eq("unit_id", unit.id).order("reference_month"),
+    supabase.from("consumption_bills").select("*").eq("unit_id", unit.id).order("reference_month").order("kind"),
     supabase.from("service_orders").select("*, os_messages(*)").eq("unit_id", unit.id).order("created_at"),
     supabase.from("suggestions").select("*").eq("unit_id", unit.id).order("created_at"),
   ]);
@@ -87,8 +87,8 @@ export async function exportUnitReport(unit: Unit) {
 ${row(["Identificação", unit.identifier])}${row(["Tipo", unitTypeLabel[unit.unit_type]])}${row(["Condômino / Empresa", unit.owner_name])}
 ${row(["CPF / CNPJ", unit.document])}${row(["E-mail", unit.email])}${row(["Telefone", unit.phone])}${row(["Usuário de acesso", unit.username])}
 ${row(["Início do vínculo", dateLabel(unit.created_at)])}${row(["Encerramento", new Date().toLocaleDateString("pt-BR")])}</table>
-<h2>Consumo (${c.data.length})</h2><table>${head(["Mês", "Energia ant.", "Energia atual", "kWh", "Climat. ant.", "Climat. atual", "kWh", "Água/Gás ant.", "Água/Gás atual", "m³", "Total"])}
-${c.data.map((r) => row([monthLabel(r.reference_month), num(r.energy_prev), num(r.energy_curr), num(r.energy_curr - r.energy_prev), num(r.hvac_prev), num(r.hvac_curr), num(r.hvac_curr - r.hvac_prev), num(r.water_prev), num(r.water_curr), num(r.water_curr - r.water_prev), brl(r.total_amount)])).join("")}</table>
+<h2>Consumo (${c.data.length})</h2><table>${head(["Mês", "Tipo", "Leitura ant.", "Leitura atual", "Consumo", "Valor"])}
+${c.data.map((r) => row([monthLabel(r.reference_month), utilityLabel[r.kind], num(r.reading_prev), num(r.reading_curr), `${num(r.reading_curr - r.reading_prev)} ${utilityUnit[r.kind]}`, brl(r.amount)])).join("")}</table>
 <h2>Ordens de serviço (${o.data.length})</h2>
 ${o.data.map((x) => `<h3>OS-${x.number} · ${esc(x.title)}</h3><table>${row(["Aberta em", dateLabel(x.created_at)])}${row(["Categoria", x.category])}${row(["Prioridade", priorityLabel[x.priority]])}${row(["Status", statusLabel[x.status]])}${row(["Descrição", x.description])}</table>
 ${x.os_messages?.length ? `<table>${head(["Data", "Autor", "Mensagem"])}${[...x.os_messages].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((m) => row([new Date(m.created_at).toLocaleString("pt-BR"), m.from_admin ? "Administração" : "Condômino", m.message])).join("")}</table>` : ""}`).join("")}
@@ -101,3 +101,9 @@ ${x.os_messages?.length ? `<table>${head(["Data", "Autor", "Mensagem"])}${[...x.
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+export type Bill = Database["public"]["Tables"]["consumption_bills"]["Row"];
+export type UtilityKind = Database["public"]["Enums"]["utility_kind"];
+export const utilityKinds: UtilityKind[] = ["energia", "agua", "climatizacao"];
+export const utilityLabel: Record<UtilityKind, string> = { energia: "Eletricidade", agua: "Água/Gás", climatizacao: "Climatização" };
+export const utilityUnit: Record<UtilityKind, string> = { energia: "kWh", agua: "m³", climatizacao: "kWh" };
