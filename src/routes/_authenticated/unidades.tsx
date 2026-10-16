@@ -38,6 +38,7 @@ const empty: Form = { identifier: "", unit_type: "sala_comercial", owner_name: "
 function UnitsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
   const [editing, setEditing] = useState<{ id?: string; form: Form } | null>(null);
   const [login, setLogin] = useState<{ unit: Unit; username: string; password: string } | null>(null);
   const [ending, setEnding] = useState<Unit | null>(null);
@@ -85,7 +86,9 @@ function UnitsPage() {
       return data;
     },
   });
-  const filtered = units.filter((u) => `${u.identifier} ${u.owner_name} ${u.email}`.toLowerCase().includes(q.toLowerCase()));
+  const filtered = units
+    .filter((u) => showInactive || (u.active && !u.terminated_at))
+    .filter((u) => `${u.identifier} ${u.owner_name} ${u.email}`.toLowerCase().includes(q.toLowerCase()));
 
   function open(u?: Unit) {
     setEditing(u ? { id: u.id, form: { ...u, phone: u.phone ?? "", document: u.document ?? "" } } : { form: empty });
@@ -111,7 +114,8 @@ function UnitsPage() {
   return (
     <>
       <PageHeader eyebrow="Cadastro" title="Unidades">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-sm"><Switch checked={showInactive} onCheckedChange={setShowInactive} /> Mostrar inativos</label>
           <Input placeholder="Buscar unidade…" value={q} onChange={(e) => setQ(e.target.value)} className="glass-strong w-56" />
           <Button variant="highlight" onClick={() => open()}>Nova unidade</Button>
         </div>
