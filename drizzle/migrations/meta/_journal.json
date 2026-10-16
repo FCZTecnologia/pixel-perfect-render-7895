@@ -29,6 +29,13 @@
       "when": 1792152586315,
       "tag": "0003_block_consumption_terminated",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792183560061,
+      "tag": "0004_consumption_bills",
+      "breakpoints": true
     }
   ]
 }
