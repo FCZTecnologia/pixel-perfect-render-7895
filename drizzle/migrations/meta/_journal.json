@@ -22,6 +22,13 @@
       "when": 1790943225979,
       "tag": "0002_tenant_logins_suggestions_notices",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792152586315,
+      "tag": "0003_block_consumption_terminated",
+      "breakpoints": true
     }
   ]
 }
