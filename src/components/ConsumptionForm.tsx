@@ -66,7 +66,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
           <Select value={unitId} onValueChange={prefillPrev}>
             <SelectTrigger className={field}><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>
-              {units.map((u) => <SelectItem key={u.id} value={u.id}>{u.identifier} — {u.owner_name}</SelectItem>)}
+              {units.filter((u) => !u.terminated_at && u.active).map((u) => <SelectItem key={u.id} value={u.id}>{u.identifier} — {u.owner_name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
