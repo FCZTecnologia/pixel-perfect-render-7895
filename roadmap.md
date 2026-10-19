@@ -1,0 +1,4 @@
+- [x] Comunicados individuais por unidade, com respostas e acesso restrito.
+- [x] Vencimento e confirmação de pagamento nas faturas, visíveis ao condômino.
+- [x] Testes de vencimento/pagamento e proteção das páginas sem sessão.
+- [ ] Conferir envio, respostas e pagamento com contas de admin/condômino: aguarda acesso autorizado na prévia.

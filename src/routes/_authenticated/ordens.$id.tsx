@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dateLabel, openAnexo, statusLabel, type OsStatus } from "@/lib/condo";
+import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/_authenticated/ordens/$id")({
-  head: () => ({ meta: [{ title: "Ordem de serviço — Condomio" }] }),
+  head: () => pageMeta("Detalhe da ordem de serviço — Painel Bandeiras Empresarial", "Descrição, anexos e histórico de respostas de uma ordem de serviço."),
   component: OrderDetail,
 });
 

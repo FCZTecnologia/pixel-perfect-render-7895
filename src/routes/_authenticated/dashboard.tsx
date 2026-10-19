@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { ConsumptionForm } from "@/components/ConsumptionForm";
+import { pageMeta } from "@/lib/page-meta";
+import { BillPaymentStatus } from "@/components/BillPaymentStatus";
 import { brl, dateLabel, monthLabel, num, openAnexo, unitTypeLabel, utilityLabel, utilityUnit } from "@/lib/condo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Visão geral — Condomio" }] }),
+  head: () => pageMeta("Visão geral — Painel Bandeiras Empresarial", "Resumo das unidades, faturas, comunicados e ordens de serviço do condomínio."),
   component: Dashboard,
 });
 
@@ -137,12 +139,12 @@ function TenantHome() {
             {bills.length ? (
               <>
                 <div className="mt-1 font-display text-3xl font-semibold">{brl(bills.reduce((t, b) => t + Number(b.amount), 0))}</div>
-                <div className="mt-1 text-sm text-foreground/70">{monthLabel(latestMonth!)}</div>
+                <div className="mt-1 text-sm text-foreground/70">{latestMonth ? monthLabel(latestMonth) : ""}</div>
                 <div className="mt-3 space-y-2">
                   {bills.map((b) => (
                     <div key={b.id} className="flex items-center justify-between gap-2 text-xs">
-                      <span className="text-muted-foreground">{utilityLabel[b.kind]} · {num(b.reading_curr - b.reading_prev)} {utilityUnit[b.kind]} · {brl(b.amount)}</span>
-                      {b.attachment_path && <Button variant="outline" size="sm" onClick={() => openAnexo(b.attachment_path!)}>Fatura</Button>}
+                      <div><span className="text-muted-foreground">{utilityLabel[b.kind]} · {num(b.reading_curr - b.reading_prev)} {utilityUnit[b.kind]} · {brl(b.amount)}</span><BillPaymentStatus due_date={b.due_date} paid_at={b.paid_at} /></div>
+                      {b.attachment_path && <Button variant="outline" size="sm" onClick={() => { if (b.attachment_path) void openAnexo(b.attachment_path); }}>Fatura</Button>}
                     </div>
                   ))}
                 </div>
@@ -173,6 +175,7 @@ function TenantHome() {
                 <div className="text-xs text-muted-foreground">{dateLabel(a.created_at)}</div>
                 <div className="font-medium">{a.title}</div>
                 {a.body && <p className="mt-1 line-clamp-2 text-sm text-foreground/70">{a.body}</p>}
+                {a.unit_id && <Button asChild variant="outline" size="sm" className="mt-2"><Link to="/avisos">Ver conversa e responder</Link></Button>}
               </div>
             ))}
             {data && data.notices.length === 0 && <p className="text-sm text-muted-foreground">Nenhum aviso no momento.</p>}

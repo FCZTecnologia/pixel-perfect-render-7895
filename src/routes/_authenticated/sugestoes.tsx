@@ -6,9 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/_authenticated/sugestoes")({
-  head: () => ({ meta: [{ title: "Sugestões — Condomio" }] }),
+  head: () => pageMeta("Sugestões — Painel Bandeiras Empresarial", "Sugestões dos condôminos enviadas à administração do condomínio."),
   component: SuggestionsPage,
 });
 

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsumptionForm } from "@/components/ConsumptionForm";
 import { brl, monthLabel, num, openAnexo, utilityKinds, utilityLabel, utilityUnit } from "@/lib/condo";
 import { toast } from "sonner";
+import { pageMeta } from "@/lib/page-meta";
+import { Input } from "@/components/ui/input";
+import { BillPaymentStatus } from "@/components/BillPaymentStatus";
 
 export const Route = createFileRoute("/_authenticated/consumo")({
-  head: () => ({ meta: [{ title: "Consumo — Condomio" }] }),
+  head: () => pageMeta("Consumo — Painel Bandeiras Empresarial", "Faturas de eletricidade, água e climatização com vencimentos e confirmação de pagamento."),
   component: ConsumptionPage,
 });
 
 function ConsumptionPage() {
   const { isAdmin } = Route.useRouteContext();
+  const qc = useQueryClient();
+  const [savingId, setSavingId] = useState<string | null>(null);
   const { data } = useQuery({
     queryKey: ["consumption"],
     queryFn: async () => {
@@ -29,6 +35,17 @@ function ConsumptionPage() {
   });
   const rows = data?.rows ?? [];
   const download = (p: string) => openAnexo(p).catch(() => toast.error("Não foi possível abrir o anexo"));
+  async function updateBill(id: string, patch: { paid_at?: string | null; due_date?: string | null }) {
+    setSavingId(id);
+    try {
+      const { data: updated, error } = await supabase.from("consumption_bills").update(patch).eq("id", id).select("id").single();
+      if (error || !updated) throw error ?? new Error("Não foi possível atualizar a fatura");
+      await Promise.all([qc.invalidateQueries({ queryKey: ["consumption"] }), qc.invalidateQueries({ queryKey: ["dashboard"] })]);
+      toast.success("Fatura atualizada");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível atualizar a fatura");
+    } finally { setSavingId(null); }
+  }
 
   return (
     <>
@@ -48,17 +65,27 @@ function ConsumptionPage() {
                       <div className="font-display font-semibold">{monthLabel(r.reference_month)}</div>
                       {isAdmin && <div className="text-xs text-muted-foreground">{r.units?.identifier}</div>}
                       <div className="mt-1 text-lg font-semibold text-highlight">{brl(r.amount)}</div>
+                      <BillPaymentStatus due_date={r.due_date} paid_at={r.paid_at} />
                     </div>
                     <div className="text-sm">
                       <div className="text-foreground/70">{num(r.reading_prev)} → {num(r.reading_curr)}</div>
                       <div className="font-medium">{num(r.reading_curr - r.reading_prev)} {utilityUnit[k]}</div>
                     </div>
-                    <div>
+                    <div className="flex flex-col items-start gap-2">
                       {r.attachment_path ? (
-                        <Button variant="outline" size="sm" onClick={() => download(r.attachment_path!)}>Ver fatura</Button>
+                        <Button variant="outline" size="sm" onClick={() => { if (r.attachment_path) download(r.attachment_path); }}>Ver fatura</Button>
                       ) : (
                         <span className="text-xs text-muted-foreground">Sem anexo</span>
                       )}
+                      {isAdmin && <>
+                        <label className="space-y-1 text-xs text-muted-foreground">
+                          <span>Vencimento</span>
+                          <Input type="date" aria-label={`Vencimento ${r.units?.identifier} ${monthLabel(r.reference_month)} ${utilityLabel[k]}`} defaultValue={r.due_date ?? ""} key={r.due_date ?? "none"} disabled={savingId !== null || Boolean(r.paid_at)} onBlur={(e) => { if (e.target.value && e.target.value !== r.due_date) void updateBill(r.id, { due_date: e.target.value }); }} />
+                        </label>
+                        <Button size="sm" variant={r.paid_at ? "outline" : "default"} disabled={savingId !== null} onClick={() => updateBill(r.id, { paid_at: r.paid_at ? null : new Date().toISOString() })}>
+                          {savingId === r.id ? "Salvando…" : r.paid_at ? "Desmarcar pagamento" : "Marcar como pago"}
+                        </Button>
+                      </>}
                     </div>
                   </Panel>
                 ))}
