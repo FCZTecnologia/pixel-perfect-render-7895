@@ -36,6 +36,13 @@
       "when": 1792183560061,
       "tag": "0004_consumption_bills",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792418287125,
+      "tag": "0005_unit_notices_bill_payment",
+      "breakpoints": true
     }
   ]
 }

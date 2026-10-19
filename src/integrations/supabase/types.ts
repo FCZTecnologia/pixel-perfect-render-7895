@@ -72,8 +72,10 @@ export type Database = {
           amount: number
           attachment_path: string | null
           created_at: string
+          due_date: string | null
           id: string
           kind: Database["public"]["Enums"]["utility_kind"]
+          paid_at: string | null
           reading_curr: number
           reading_prev: number
           reference_month: string
@@ -83,8 +85,10 @@ export type Database = {
           amount?: number
           attachment_path?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           kind: Database["public"]["Enums"]["utility_kind"]
+          paid_at?: string | null
           reading_curr?: number
           reading_prev?: number
           reference_month: string
@@ -94,8 +98,10 @@ export type Database = {
           amount?: number
           attachment_path?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["utility_kind"]
+          paid_at?: string | null
           reading_curr?: number
           reading_prev?: number
           reference_month?: string
@@ -111,26 +117,72 @@ export type Database = {
           },
         ]
       }
+      notice_messages: {
+        Row: {
+          author_id: string
+          created_at: string
+          from_admin: boolean
+          id: string
+          message: string
+          notice_id: string
+        }
+        Insert: {
+          author_id?: string
+          created_at?: string
+          from_admin?: boolean
+          id?: string
+          message: string
+          notice_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          from_admin?: boolean
+          id?: string
+          message?: string
+          notice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_messages_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "notices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notices: {
         Row: {
           body: string
           created_at: string
           id: string
           title: string
+          unit_id: string | null
         }
         Insert: {
           body?: string
           created_at?: string
           id?: string
           title: string
+          unit_id?: string | null
         }
         Update: {
           body?: string
           created_at?: string
           id?: string
           title?: string
+          unit_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notices_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       os_messages: {
         Row: {
