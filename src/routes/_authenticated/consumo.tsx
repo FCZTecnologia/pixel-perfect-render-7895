@@ -6,7 +6,7 @@ import { PageHeader, Panel } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsumptionForm } from "@/components/ConsumptionForm";
-import { brl, monthLabel, num, openAnexo, utilityKinds, utilityLabel, utilityUnit } from "@/lib/condo";
+import { brl, monthLabel, num, openAnexo, uploadAnexo, utilityKinds, utilityLabel, utilityUnit } from "@/lib/condo";
 import { toast } from "sonner";
 import { pageMeta } from "@/lib/page-meta";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ function ConsumptionPage() {
   });
   const rows = data?.rows ?? [];
   const download = (p: string) => openAnexo(p).catch(() => toast.error("Não foi possível abrir o anexo"));
-  async function updateBill(id: string, patch: { paid_at?: string | null; due_date?: string | null }) {
+  async function updateBill(id: string, patch: { paid_at?: string | null; due_date?: string | null; attachment_path?: string | null }) {
     setSavingId(id);
     try {
       const { data: updated, error } = await supabase.from("consumption_bills").update(patch).eq("id", id).select("id").single();
@@ -78,6 +78,21 @@ function ConsumptionPage() {
                         <span className="text-xs text-muted-foreground">Sem anexo</span>
                       )}
                       {isAdmin && <>
+                        <label className={`inline-flex cursor-pointer items-center rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent ${savingId !== null ? "pointer-events-none opacity-50" : ""}`}>
+                          {r.attachment_path ? "Trocar anexo" : "Anexar fatura"}
+                          <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = "";
+                            if (!file) return;
+                            if (file.size > 20 * 1024 * 1024) { toast.error("Arquivo maior que 20 MB"); return; }
+                            try {
+                              setSavingId(r.id);
+                              const path = await uploadAnexo(r.unit_id, file, `fatura-${k}`);
+                              setSavingId(null);
+                              await updateBill(r.id, { attachment_path: path });
+                            } catch { setSavingId(null); toast.error("Não foi possível enviar o anexo"); }
+                          }} />
+                        </label>
                         <label className="space-y-1 text-xs text-muted-foreground">
                           <span>Vencimento</span>
                           <Input type="date" aria-label={`Vencimento ${r.units?.identifier} ${monthLabel(r.reference_month)} ${utilityLabel[k]}`} defaultValue={r.due_date ?? ""} key={r.due_date ?? "none"} disabled={savingId !== null || Boolean(r.paid_at)} onBlur={(e) => { if (e.target.value && e.target.value !== r.due_date) void updateBill(r.id, { due_date: e.target.value }); }} />
