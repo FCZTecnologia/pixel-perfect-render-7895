@@ -1,0 +1,3 @@
+- [ ] Comunicados individuais por unidade, com respostas e acesso restrito.
+- [ ] Vencimento e confirmação de pagamento nas faturas, visíveis ao condômino.
+- [ ] Testar permissões e os fluxos nas telas.
