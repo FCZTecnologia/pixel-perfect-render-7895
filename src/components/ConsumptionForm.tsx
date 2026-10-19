@@ -15,6 +15,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
   const [unitId, setUnitId] = useState("");
   const [kind, setKind] = useState<UtilityKind>("energia");
   const [month, setMonth] = useState(thisMonth());
+  const [dueDate, setDueDate] = useState("");
   const [v, setV] = useState({ prev: "", curr: "", amount: "" });
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -39,6 +40,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
         {
           unit_id: unitId, kind, reference_month: `${month}-01`,
           reading_prev: n(v.prev), reading_curr: n(v.curr), amount: n(v.amount),
+          due_date: dueDate || null,
           ...(attachment_path ? { attachment_path } : {}),
         },
         { onConflict: "unit_id,reference_month,kind" },
@@ -47,6 +49,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
       toast.success(`${utilityLabel[kind]} registrada`);
       setV({ prev: "", curr: "", amount: "" });
       setFile(null);
+      setDueDate("");
       qc.invalidateQueries();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao salvar");
@@ -61,10 +64,10 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
     <form onSubmit={save} className="space-y-3">
       <div className="grid grid-cols-3 gap-1 rounded-xl glass-strong p-1">
         {utilityKinds.map((k) => (
-          <button key={k} type="button" onClick={() => prefill(unitId, k)}
+          <Button key={k} variant="ghost" type="button" onClick={() => prefill(unitId, k)}
             className={k === kind ? "rounded-lg bg-primary px-2 py-1.5 text-xs font-semibold text-primary-foreground" : "rounded-lg px-2 py-1.5 text-xs text-muted-foreground"}>
             {utilityLabel[k]}
-          </button>
+          </Button>
         ))}
       </div>
       <div className={grid}>
@@ -87,6 +90,10 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
         <Input inputMode="decimal" placeholder="Leitura anterior" value={v.prev} onChange={set("prev")} className={field} />
         <Input inputMode="decimal" placeholder="Leitura atual" value={v.curr} onChange={set("curr")} className={field} />
       </fieldset>
+      <div className="space-y-1">
+        <Label htmlFor="bill-due-date" className="text-[11px] text-muted-foreground">Data de vencimento</Label>
+        <Input id="bill-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={field} required />
+      </div>
       <div className={grid}>
         <div className="space-y-1">
           <Label className="text-[11px] text-muted-foreground">Valor (R$)</Label>
