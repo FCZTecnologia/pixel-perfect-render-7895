@@ -1,5 +1,6 @@
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
+import { dueDateLabel } from "./billing";
 
 export type Unit = Database["public"]["Tables"]["units"]["Row"];
 export type Consumption = Database["public"]["Tables"]["consumption"]["Row"];
@@ -66,17 +67,19 @@ export const toLoginEmail = (v: string) => {
 };
 
 const esc = (v: unknown) =>
-  String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] ?? c);
 
 export async function exportUnitReport(unit: Unit) {
-  const [c, o, s] = await Promise.all([
+  const [c, o, s, notices] = await Promise.all([
     supabase.from("consumption_bills").select("*").eq("unit_id", unit.id).order("reference_month").order("kind"),
     supabase.from("service_orders").select("*, os_messages(*)").eq("unit_id", unit.id).order("created_at"),
     supabase.from("suggestions").select("*").eq("unit_id", unit.id).order("created_at"),
+    supabase.from("notices").select("*, notice_messages(*)").eq("unit_id", unit.id).order("created_at"),
   ]);
   if (c.error) throw c.error;
   if (o.error) throw o.error;
   if (s.error) throw s.error;
+  if (notices.error) throw notices.error;
   const row = (cells: unknown[]) => `<tr>${cells.map((x) => `<td>${esc(x)}</td>`).join("")}</tr>`;
   const head = (cells: string[]) => `<tr>${cells.map((x) => `<th>${x}</th>`).join("")}</tr>`;
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Encerramento ${esc(unit.identifier)}</title>
@@ -87,12 +90,13 @@ export async function exportUnitReport(unit: Unit) {
 ${row(["Identificação", unit.identifier])}${row(["Tipo", unitTypeLabel[unit.unit_type]])}${row(["Condômino / Empresa", unit.owner_name])}
 ${row(["CPF / CNPJ", unit.document])}${row(["E-mail", unit.email])}${row(["Telefone", unit.phone])}${row(["Usuário de acesso", unit.username])}
 ${row(["Início do vínculo", dateLabel(unit.created_at)])}${row(["Encerramento", new Date().toLocaleDateString("pt-BR")])}</table>
-<h2>Consumo (${c.data.length})</h2><table>${head(["Mês", "Tipo", "Leitura ant.", "Leitura atual", "Consumo", "Valor"])}
-${c.data.map((r) => row([monthLabel(r.reference_month), utilityLabel[r.kind], num(r.reading_prev), num(r.reading_curr), `${num(r.reading_curr - r.reading_prev)} ${utilityUnit[r.kind]}`, brl(r.amount)])).join("")}</table>
+<h2>Consumo (${c.data.length})</h2><table>${head(["Mês", "Tipo", "Leitura ant.", "Leitura atual", "Consumo", "Valor", "Vencimento", "Pagamento"])}
+${c.data.map((r) => row([monthLabel(r.reference_month), utilityLabel[r.kind], num(r.reading_prev), num(r.reading_curr), `${num(r.reading_curr - r.reading_prev)} ${utilityUnit[r.kind]}`, brl(r.amount), r.due_date ? dueDateLabel(r.due_date) : "Não informado", r.paid_at ? `Pago em ${dateLabel(r.paid_at)}` : "Em aberto"])).join("")}</table>
 <h2>Ordens de serviço (${o.data.length})</h2>
 ${o.data.map((x) => `<h3>OS-${x.number} · ${esc(x.title)}</h3><table>${row(["Aberta em", dateLabel(x.created_at)])}${row(["Categoria", x.category])}${row(["Prioridade", priorityLabel[x.priority]])}${row(["Status", statusLabel[x.status]])}${row(["Descrição", x.description])}</table>
 ${x.os_messages?.length ? `<table>${head(["Data", "Autor", "Mensagem"])}${[...x.os_messages].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((m) => row([new Date(m.created_at).toLocaleString("pt-BR"), m.from_admin ? "Administração" : "Condômino", m.message])).join("")}</table>` : ""}`).join("")}
 <h2>Sugestões (${s.data.length})</h2><table>${head(["Data", "Mensagem"])}${s.data.map((x) => row([new Date(x.created_at).toLocaleString("pt-BR"), x.message])).join("")}</table>
+<h2>Comunicados individuais (${notices.data.length})</h2>${notices.data.map((n) => `<h3>${esc(n.title)}</h3><p>${esc(n.body)}</p><table>${head(["Data", "Autor", "Resposta"])}${[...n.notice_messages].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((m) => row([new Date(m.created_at).toLocaleString("pt-BR"), m.from_admin ? "Administração" : "Condômino", m.message])).join("")}</table>`).join("")}
 </body></html>`;
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const a = document.createElement("a");
