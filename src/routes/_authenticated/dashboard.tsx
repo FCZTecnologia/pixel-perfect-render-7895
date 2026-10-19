@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { ConsumptionForm } from "@/components/ConsumptionForm";
+import { pageMeta } from "@/lib/page-meta";
 import { BillPaymentStatus } from "@/components/BillPaymentStatus";
 import { brl, dateLabel, monthLabel, num, openAnexo, unitTypeLabel, utilityLabel, utilityUnit } from "@/lib/condo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Visão geral — Condomio" }] }),
+  head: () => pageMeta("Visão geral — Painel Bandeiras Empresarial", "Resumo das unidades, faturas, comunicados e ordens de serviço do condomínio."),
   component: Dashboard,
 });
 

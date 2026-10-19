@@ -18,3 +18,4 @@
 - Signed-in pages live under `src/routes/_authenticated/`; role (`isAdmin`) comes from that layout's route context.
 - Notices use a nullable unit target and a separate reply thread; RLS restricts targeted notices and replies to admins and current unit owners so general announcements remain read-only for tenants.
 - Invoice due dates are calendar dates and payment confirmation is stored on each bill; browser updates use admin-only RLS and shared billing status logic to keep all bill displays consistent.
+- Content-route metadata uses leaf-specific titles and descriptions; shared pageMeta supplies the standard social tags for protected pages.

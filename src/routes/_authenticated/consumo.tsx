@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsumptionForm } from "@/components/ConsumptionForm";
 import { brl, monthLabel, num, openAnexo, utilityKinds, utilityLabel, utilityUnit } from "@/lib/condo";
 import { toast } from "sonner";
+import { pageMeta } from "@/lib/page-meta";
 import { Input } from "@/components/ui/input";
 import { BillPaymentStatus } from "@/components/BillPaymentStatus";
 
 export const Route = createFileRoute("/_authenticated/consumo")({
-  head: () => ({ meta: [{ title: "Consumo — Condomio" }] }),
+  head: () => pageMeta("Consumo — Painel Bandeiras Empresarial", "Faturas de eletricidade, água e climatização com vencimentos e confirmação de pagamento."),
   component: ConsumptionPage,
 });
 

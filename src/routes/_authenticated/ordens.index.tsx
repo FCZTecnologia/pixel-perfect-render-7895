@@ -12,10 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dateLabel, priorityLabel, statusLabel, uploadAnexo, type OsPriority, type OsStatus } from "@/lib/condo";
+import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/_authenticated/ordens/")({
   validateSearch: (s: Record<string, unknown>): { nova?: boolean } => (s["nova"] === true || s["nova"] === "true" ? { nova: true } : {}),
-  head: () => ({ meta: [{ title: "Ordens de serviço — Condomio" }] }),
+  head: () => pageMeta("Ordens de serviço — Painel Bandeiras Empresarial", "Acompanhamento de chamados de manutenção por unidade, status e prioridade."),
   component: OrdersPage,
 });
 

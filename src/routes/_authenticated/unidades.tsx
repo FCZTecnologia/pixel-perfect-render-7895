@@ -14,12 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { exportUnitReport, unitTypeLabel, type Unit, type UnitType } from "@/lib/condo";
 import { useServerFn } from "@tanstack/react-start";
 import { setTenantLogin, terminateUnit } from "@/lib/tenants.functions";
+import { pageMeta } from "@/lib/page-meta";
 
 export const Route = createFileRoute("/_authenticated/unidades")({
   beforeLoad: ({ context }) => {
     if (!context.isAdmin) throw redirect({ to: "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Unidades — Condomio" }] }),
+  head: () => pageMeta("Unidades — Painel Bandeiras Empresarial", "Cadastro de unidades, responsáveis, acessos e encerramento de contratos."),
   component: UnitsPage,
 });
 

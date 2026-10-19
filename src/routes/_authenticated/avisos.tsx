@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { dateLabel } from "@/lib/condo";
+import { pageMeta } from "@/lib/page-meta";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoticeConversation, type ConversationNotice } from "@/components/NoticeConversation";
 
 export const Route = createFileRoute("/_authenticated/avisos")({
-  head: () => ({ meta: [{ title: "Avisos — Condomio" }] }),
+  head: () => pageMeta("Avisos — Painel Bandeiras Empresarial", "Comunicados gerais e individuais da administração e respostas dos condôminos."),
   component: NoticesPage,
 });
 
