@@ -48,18 +48,26 @@ function Dashboard() {
 
 function AdminHome() {
   const { data } = useData();
-  const units = data?.units ?? [];
-  const latest = data?.consumption[0]?.reference_month;
-  const monthRows = (data?.consumption ?? []).filter((c) => c.reference_month === latest);
+  const [unitId, setUnitId] = useState(ALL_UNITS);
+  const allUnits = data?.units ?? [];
+  const pick = <T extends { unit_id: string }>(l: T[]) => unitId === ALL_UNITS ? l : l.filter((x) => x.unit_id === unitId);
+  const units = unitId === ALL_UNITS ? allUnits : allUnits.filter((u) => u.id === unitId);
+  const consumption = pick(data?.consumption ?? []);
+  const orders = pick(data?.orders ?? []);
+  const latest = consumption[0]?.reference_month;
+  const monthRows = consumption.filter((c) => c.reference_month === latest);
   const sum = (k: string) => monthRows.filter((c) => c.kind === k).reduce((s, c) => s + (c.reading_curr - c.reading_prev), 0);
   const kwh = sum("energia"), hvac = sum("climatizacao"), m3 = sum("agua");
-  const open = (data?.orders ?? []).filter((o) => o.status === "pendente" || o.status === "em_andamento");
+  const open = orders.filter((o) => o.status === "pendente" || o.status === "em_andamento");
   const highOpen = open.filter((o) => o.priority === "alta").length;
 
   return (
     <>
       <PageHeader eyebrow="Painel administrativo" title="Visão geral">
-        <div className="glass-strong rounded-xl px-4 py-2.5 text-sm text-foreground/70">{latest ? monthLabel(latest) : "Sem leituras"}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <UnitFilter units={allUnits} value={unitId} onChange={setUnitId} />
+          <div className="glass-strong rounded-xl px-4 py-2.5 text-sm text-foreground/70">{latest ? monthLabel(latest) : "Sem leituras"}</div>
+        </div>
       </PageHeader>
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Stat label="Unidades ativas" value={String(units.filter((u) => u.active).length)} note={`${units.length} cadastradas`} />
@@ -75,7 +83,7 @@ function AdminHome() {
             <Link to="/ordens" className="text-xs text-primary">Ver todas</Link>
           </div>
           <div className="space-y-3">
-            {(data?.orders ?? []).slice(0, 5).map((o) => (
+            {orders.slice(0, 5).map((o) => (
               <Link key={o.id} to="/ordens/$id" params={{ id: o.id }} className="glass-strong flex items-center gap-4 rounded-xl p-4">
                 <div className={o.status === "pendente" ? "grid size-10 shrink-0 place-items-center rounded-lg bg-highlight/15 font-semibold text-highlight" : "grid size-10 shrink-0 place-items-center rounded-lg bg-primary/15 font-semibold text-primary"}>OS</div>
                 <div className="min-w-0 flex-1">
@@ -85,7 +93,7 @@ function AdminHome() {
                 <StatusBadge status={o.status} />
               </Link>
             ))}
-            {data && data.orders.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma ordem de serviço ainda.</p>}
+            {data && orders.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma ordem de serviço ainda.</p>}
           </div>
         </Panel>
         <Panel>
