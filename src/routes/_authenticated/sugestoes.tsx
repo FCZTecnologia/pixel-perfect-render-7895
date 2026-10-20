@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel } from "@/components/StatusBadge";
+import { ALL_UNITS, UnitFilter } from "@/components/UnitFilter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { pageMeta } from "@/lib/page-meta";
@@ -29,6 +30,9 @@ function SuggestionsPage() {
     },
   });
   const rows = data?.rows ?? [];
+  const [unitId, setUnitId] = useState(ALL_UNITS);
+  const filterUnits = [...new Map(rows.map((s) => [s.unit_id, { id: s.unit_id, identifier: s.units?.identifier ?? "Unidade" }])).values()].sort((a, b) => a.identifier.localeCompare(b.identifier));
+  const shown = unitId === ALL_UNITS ? rows : rows.filter((s) => s.unit_id === unitId);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -60,7 +64,8 @@ function SuggestionsPage() {
           </Panel>
         )}
         <div className="space-y-3">
-          {rows.map((s) => (
+          {isAdmin && <UnitFilter units={filterUnits} value={unitId} onChange={setUnitId} />}
+          {shown.map((s) => (
             <Panel key={s.id} className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-xs text-muted-foreground">
@@ -73,7 +78,7 @@ function SuggestionsPage() {
               {isAdmin && s.is_read && <span className="text-xs text-muted-foreground">Lida</span>}
             </Panel>
           ))}
-          {data && rows.length === 0 && <Panel className="text-center text-sm text-muted-foreground">Nenhuma sugestão ainda.</Panel>}
+          {data && shown.length === 0 && <Panel className="text-center text-sm text-muted-foreground">Nenhuma sugestão ainda.</Panel>}
         </div>
       </div>
     </>

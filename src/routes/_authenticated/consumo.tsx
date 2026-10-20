@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { pageMeta } from "@/lib/page-meta";
 import { Input } from "@/components/ui/input";
 import { BillPaymentStatus } from "@/components/BillPaymentStatus";
+import { ALL_UNITS, UnitFilter } from "@/components/UnitFilter";
 
 export const Route = createFileRoute("/_authenticated/consumo")({
   head: () => pageMeta("Consumo — Painel Bandeiras Empresarial", "Faturas de eletricidade, água e climatização com vencimentos e confirmação de pagamento."),
@@ -34,6 +35,17 @@ function ConsumptionPage() {
     },
   });
   const rows = data?.rows ?? [];
+  const [unitId, setUnitId] = useState(ALL_UNITS);
+  async function removeBill(id: string, path: string | null) {
+    if (!confirm("Excluir este lançamento de consumo? Esta ação não pode ser desfeita.")) return;
+    setSavingId(id);
+    const { error } = await supabase.from("consumption_bills").delete().eq("id", id);
+    setSavingId(null);
+    if (error) return void toast.error(error.message);
+    if (path) await supabase.storage.from("anexos").remove([path]);
+    await Promise.all([qc.invalidateQueries({ queryKey: ["consumption"] }), qc.invalidateQueries({ queryKey: ["dashboard"] })]);
+    toast.success("Lançamento excluído");
+  }
   const download = (p: string) => openAnexo(p).catch(() => toast.error("Não foi possível abrir o anexo"));
   async function updateBill(id: string, patch: { paid_at?: string | null; due_date?: string | null; attachment_path?: string | null }) {
     setSavingId(id);
@@ -49,14 +61,16 @@ function ConsumptionPage() {
 
   return (
     <>
-      <PageHeader eyebrow={isAdmin ? "Eletricidade, água e climatização" : "Histórico mensal"} title={isAdmin ? "Gestão de consumo" : "Contas de consumo"} />
+      <PageHeader eyebrow={isAdmin ? "Eletricidade, água e climatização" : "Histórico mensal"} title={isAdmin ? "Gestão de consumo" : "Contas de consumo"}>
+        {isAdmin && <UnitFilter units={data?.units ?? []} value={unitId} onChange={setUnitId} />}
+      </PageHeader>
       <div className={isAdmin ? "grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]" : ""}>
         <Tabs defaultValue="energia">
           <TabsList className="mb-4">
             {utilityKinds.map((k) => <TabsTrigger key={k} value={k}>{utilityLabel[k]}</TabsTrigger>)}
           </TabsList>
           {utilityKinds.map((k) => {
-            const list = rows.filter((r) => r.kind === k);
+            const list = rows.filter((r) => r.kind === k && (unitId === ALL_UNITS || r.unit_id === unitId));
             return (
               <TabsContent key={k} value={k} className="space-y-3">
                 {list.map((r) => (
@@ -100,6 +114,7 @@ function ConsumptionPage() {
                         <Button size="sm" variant={r.paid_at ? "outline" : "default"} disabled={savingId !== null} onClick={() => updateBill(r.id, { paid_at: r.paid_at ? null : new Date().toISOString() })}>
                           {savingId === r.id ? "Salvando…" : r.paid_at ? "Desmarcar pagamento" : "Marcar como pago"}
                         </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" disabled={savingId !== null} onClick={() => removeBill(r.id, r.attachment_path)}>Excluir lançamento</Button>
                       </>}
                     </div>
                   </Panel>

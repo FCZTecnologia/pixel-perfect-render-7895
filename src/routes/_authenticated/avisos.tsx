@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel } from "@/components/StatusBadge";
+import { ALL_UNITS, UnitFilter } from "@/components/UnitFilter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,8 @@ function NoticesPage() {
   const [target, setTarget] = useState("general");
   const [saving, setSaving] = useState(false);
   const [conversation, setConversation] = useState<ConversationNotice | null>(null);
+  const [unitFilter, setUnitFilter] = useState(ALL_UNITS);
+  const filterUnits = [...new Map(data.filter((n) => n.unit_id).map((n) => [n.unit_id as string, { id: n.unit_id as string, identifier: n.units?.identifier ?? "Unidade" }])).values()].sort((a, b) => a.identifier.localeCompare(b.identifier));
 
   async function publish(e: React.FormEvent) {
     e.preventDefault();
@@ -69,11 +72,14 @@ function NoticesPage() {
       <PageHeader eyebrow="Comunicados" title="Avisos" />
       <div className={isAdmin ? "grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]" : ""}>
         <Tabs defaultValue="general">
-          <TabsList className="mb-4"><TabsTrigger value="general">Gerais</TabsTrigger><TabsTrigger value="individual">Individuais</TabsTrigger></TabsList>
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <TabsList><TabsTrigger value="general">Gerais</TabsTrigger><TabsTrigger value="individual">Individuais</TabsTrigger></TabsList>
+            {isAdmin && <UnitFilter units={filterUnits} value={unitFilter} onChange={setUnitFilter} />}
+          </div>
           {isPending && <p className="text-sm text-muted-foreground">Carregando comunicados…</p>}
           {error && <p className="text-sm text-destructive">Não foi possível carregar os comunicados.</p>}
           {["general", "individual"].map((tab) => <TabsContent key={tab} value={tab} className="space-y-3">
-          {data.filter((n) => tab === "general" ? !n.unit_id : Boolean(n.unit_id)).map((n) => (
+          {data.filter((n) => tab === "general" ? !n.unit_id : Boolean(n.unit_id) && (unitFilter === ALL_UNITS || n.unit_id === unitFilter)).map((n) => (
             <Panel key={n.id}>
               <div className="flex items-start justify-between gap-3">
                 <div>
