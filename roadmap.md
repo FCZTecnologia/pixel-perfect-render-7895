@@ -1,3 +1,4 @@
+- [ ] Ocultar unidades inativas em todos os filtros e reportar pendências antes do encerramento, com testes.
 - [x] Adicionar exclusão de unidades pelo administrador com confirmação, exportação opcional e testes.
 - [ ] Conferir exclusão pela tela com conta de administrador: acesso autorizado indisponível, requer login na prévia.
 - [x] Comunicados individuais por unidade, com respostas e acesso restrito.
