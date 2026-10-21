@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dateLabel, priorityLabel, statusLabel, uploadAnexo, type OsPriority, type OsStatus } from "@/lib/condo";
 import { pageMeta } from "@/lib/page-meta";
+import { UnitFilter } from "@/components/UnitFilter";
 
 export const Route = createFileRoute("/_authenticated/ordens/")({
   validateSearch: (s: Record<string, unknown>): { nova?: boolean } => (s["nova"] === true || s["nova"] === "true" ? { nova: true } : {}),
@@ -35,7 +36,7 @@ function OrdersPage() {
     queryKey: ["orders"],
     queryFn: async () => {
       const [u, o] = await Promise.all([
-        supabase.from("units").select("id, identifier").order("identifier"),
+        supabase.from("units").select("id, identifier, active, terminated_at").order("identifier"),
         supabase.from("service_orders").select("*, units(identifier)").order("created_at", { ascending: false }),
       ]);
       if (u.error) throw u.error;
@@ -55,7 +56,7 @@ function OrdersPage() {
 
       {isAdmin && (
         <div className="mb-5 flex flex-wrap gap-2">
-          <Filter value={unit} onChange={setUnit} all="Todas as unidades" options={(data?.units ?? []).map((u) => [u.id, u.identifier])} />
+          <UnitFilter units={data?.units ?? []} value={unit} onChange={setUnit} />
           <Filter value={status} onChange={setStatus} all="Todos os status" options={Object.entries(statusLabel)} />
           <Filter value={prio} onChange={setPrio} all="Todas as prioridades" options={Object.entries(priorityLabel)} />
         </div>

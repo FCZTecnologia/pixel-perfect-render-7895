@@ -14,6 +14,7 @@
 - Data access uses the browser client with RLS; tenant access comes from `owns_unit` (unit's `login_user_id` or legacy email match, non-terminated units only).
 - Tenant logins are created by admins via server functions (`tenants.functions.ts`) as username + synthetic email `<user>@condomio.app`; there is no public signup.
 - Contract termination exports a client-side HTML report, then sets `terminated_at`, inactivates the unit and bans the login; re-renting requires a new unit row.
+- Unit filters share active/non-terminated eligibility; termination checks unpaid bills and pending/in-progress orders through RLS, requires acknowledgment when present, and rechecks the report before exporting so newly changed pending items must be reviewed.
 - First authenticated user becomes admin via `claim_admin_if_none()` RPC in the `_authenticated` gate — bootstraps without manual SQL.
 - Files live in private bucket `anexos` under `<unit_id>/...` paths; storage RLS keys off the first folder segment.
 - Signed-in pages live under `src/routes/_authenticated/`; role (`isAdmin`) comes from that layout's route context.
