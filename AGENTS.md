@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
+- Unit deletion uses the authenticated security-invoker delete_unit RPC, which verifies the admin role and atomically deletes targeted notices and the unit with cascading history; deleting a unit removes tenant ownership without deleting a potentially shared login.
 - Data access uses the browser client with RLS; tenant access comes from `owns_unit` (unit's `login_user_id` or legacy email match, non-terminated units only).
 - Tenant logins are created by admins via server functions (`tenants.functions.ts`) as username + synthetic email `<user>@condomio.app`; there is no public signup.
 - Contract termination exports a client-side HTML report, then sets `terminated_at`, inactivates the unit and bans the login; re-renting requires a new unit row.

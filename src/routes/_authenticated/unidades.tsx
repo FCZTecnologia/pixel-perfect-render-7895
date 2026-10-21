@@ -15,6 +15,8 @@ import { exportUnitReport, unitTypeLabel, type Unit, type UnitType } from "@/lib
 import { useServerFn } from "@tanstack/react-start";
 import { setTenantLogin, terminateUnit } from "@/lib/tenants.functions";
 import { pageMeta } from "@/lib/page-meta";
+import { Trash2 } from "lucide-react";
+import { deleteRegisteredUnit } from "@/lib/unit-deletion";
 
 export const Route = createFileRoute("/_authenticated/unidades")({
   beforeLoad: ({ context }) => {
@@ -43,6 +45,7 @@ function UnitsPage() {
   const [editing, setEditing] = useState<{ id?: string; form: Form } | null>(null);
   const [login, setLogin] = useState<{ unit: Unit; username: string; password: string } | null>(null);
   const [ending, setEnding] = useState<Unit | null>(null);
+  const [deleting, setDeleting] = useState<Unit | null>(null);
   const [busy, setBusy] = useState(false);
   const setLoginFn = useServerFn(setTenantLogin);
   const terminateFn = useServerFn(terminateUnit);
@@ -59,6 +62,21 @@ function UnitsPage() {
     } catch (err) {
       const m = err instanceof Error ? err.message : "Erro";
       toast.error(m.startsWith("[") ? "Verifique usuário (3+ caracteres) e senha (6+)" : m);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeUnit() {
+    if (!deleting || busy) return;
+    setBusy(true);
+    try {
+      await deleteRegisteredUnit(supabase, deleting.id);
+      setDeleting(null);
+      await qc.invalidateQueries();
+      toast.success("Unidade excluída");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível excluir a unidade");
     } finally {
       setBusy(false);
     }
@@ -153,6 +171,7 @@ function UnitsPage() {
                   <div className="mt-1 text-xs text-muted-foreground">{u.username ? `Usuário: ${u.username}` : "Sem acesso"}</div>
                 </td>
                 <td className="px-5 py-3 text-right">
+                  <div className="flex items-center justify-end gap-2">
                   {u.terminated_at ? (
                     <Button variant="outline" size="sm" onClick={() => exportUnitReport(u).catch(() => toast.error("Falha ao exportar"))}>Exportar</Button>
                   ) : (
@@ -162,6 +181,8 @@ function UnitsPage() {
                       <Button variant="outline" size="sm" className="text-destructive" onClick={() => setEnding(u)}>Encerrar contrato</Button>
                     </div>
                   )}
+                  <Button variant="ghost" size="icon" className="shrink-0 text-destructive" aria-label={`Excluir unidade ${u.identifier}`} title="Excluir unidade" disabled={busy} onClick={() => setDeleting(u)}><Trash2 className="size-4" /></Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -207,6 +228,18 @@ function UnitsPage() {
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando…" : "Salvar acesso"}</Button>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && !busy && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Excluir unidade · {deleting?.identifier}</DialogTitle></DialogHeader>
+          <p className="text-sm text-foreground/70">A unidade e seu histórico de consumo, ordens de serviço, sugestões e comunicados individuais serão excluídos definitivamente. O condômino perderá acesso aos dados dessa unidade. Esta ação não pode ser desfeita.</p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
+            {deleting && <Button variant="outline" disabled={busy} onClick={() => exportUnitReport(deleting).catch(() => toast.error("Falha ao exportar"))}>Exportar relatório</Button>}
+            <Button variant="destructive" disabled={busy} onClick={removeUnit}><Trash2 className="mr-2 size-4" />{busy ? "Excluindo…" : "Excluir definitivamente"}</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
