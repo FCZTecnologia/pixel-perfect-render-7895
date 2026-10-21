@@ -1,4 +1,5 @@
-- [ ] Adicionar exclusão de unidades pelo administrador com confirmação e verificar o fluxo.
+- [x] Adicionar exclusão de unidades pelo administrador com confirmação, exportação opcional e testes.
+- [ ] Conferir exclusão pela tela com conta de administrador: acesso autorizado indisponível, requer login na prévia.
 - [x] Comunicados individuais por unidade, com respostas e acesso restrito.
 - [x] Vencimento e confirmação de pagamento nas faturas, visíveis ao condômino.
 - [x] Testes de vencimento/pagamento e proteção das páginas sem sessão.

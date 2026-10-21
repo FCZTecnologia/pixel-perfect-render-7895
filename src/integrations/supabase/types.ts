@@ -376,6 +376,7 @@ export type Database = {
     }
     Functions: {
       claim_admin_if_none: { Args: never; Returns: boolean }
+      delete_unit: { Args: { _unit_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
