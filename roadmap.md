@@ -1,3 +1,4 @@
+- [ ] Configurar SMTP no painel administrador e notificações de contas e avisos para o e-mail de contato da unidade.
 - [x] Ocultar unidades inativas em todos os filtros e reportar pendências antes do encerramento, com 5 testes de regras passando.
 - [ ] Conferir filtros e aviso de encerramento na tela: requer login de administrador na prévia, pois não foi possível obter acesso autorizado.
 - [x] Adicionar exclusão de unidades pelo administrador com confirmação, exportação opcional e testes.
