@@ -22,7 +22,7 @@ function SuggestionsPage() {
     queryKey: ["suggestions"],
     queryFn: async () => {
       const [s, u] = await Promise.all([
-        supabase.from("suggestions").select("*, units(identifier, owner_name)").order("created_at", { ascending: false }),
+        supabase.from("suggestions").select("*, units(identifier, owner_name, active, terminated_at)").order("created_at", { ascending: false }),
         supabase.from("units").select("id").is("terminated_at", null).limit(1),
       ]);
       if (s.error) throw s.error;
@@ -31,7 +31,7 @@ function SuggestionsPage() {
   });
   const rows = data?.rows ?? [];
   const [unitId, setUnitId] = useState(ALL_UNITS);
-  const filterUnits = [...new Map(rows.map((s) => [s.unit_id, { id: s.unit_id, identifier: s.units?.identifier ?? "Unidade" }])).values()].sort((a, b) => a.identifier.localeCompare(b.identifier));
+  const filterUnits = [...new Map(rows.map((s) => [s.unit_id, { id: s.unit_id, identifier: s.units?.identifier ?? "Unidade", active: s.units?.active ?? false, terminated_at: s.units?.terminated_at ?? null }])).values()].sort((a, b) => a.identifier.localeCompare(b.identifier));
   const shown = unitId === ALL_UNITS ? rows : rows.filter((s) => s.unit_id === unitId);
 
   async function send(e: React.FormEvent) {

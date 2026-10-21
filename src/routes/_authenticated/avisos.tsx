@@ -24,7 +24,7 @@ export function useNotices() {
   return useQuery({
     queryKey: ["notices"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("notices").select("*, units(identifier)").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("notices").select("*, units(identifier, active, terminated_at)").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -46,7 +46,7 @@ function NoticesPage() {
   const [saving, setSaving] = useState(false);
   const [conversation, setConversation] = useState<ConversationNotice | null>(null);
   const [unitFilter, setUnitFilter] = useState(ALL_UNITS);
-  const filterUnits = [...new Map(data.filter((n) => n.unit_id).map((n) => [n.unit_id as string, { id: n.unit_id as string, identifier: n.units?.identifier ?? "Unidade" }])).values()].sort((a, b) => a.identifier.localeCompare(b.identifier));
+  const filterUnits = [...new Map(data.filter((n) => n.unit_id).map((n) => [n.unit_id as string, { id: n.unit_id as string, identifier: n.units?.identifier ?? "Unidade", active: n.units?.active ?? false, terminated_at: n.units?.terminated_at ?? null }])).values()].sort((a, b) => a.identifier.localeCompare(b.identifier));
 
   async function publish(e: React.FormEvent) {
     e.preventDefault();

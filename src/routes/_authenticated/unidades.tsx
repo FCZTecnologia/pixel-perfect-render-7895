@@ -11,7 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { exportUnitReport, unitTypeLabel, type Unit, type UnitType } from "@/lib/condo";
+import { exportUnitReport, unitTypeLabel, brl, monthLabel, utilityLabel, statusLabel, type Unit, type UnitType } from "@/lib/condo";
+import { terminationPendingItems, pendingItemsSignature } from "@/lib/unit-lifecycle";
+import { dueDateLabel } from "@/lib/billing";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useServerFn } from "@tanstack/react-start";
 import { setTenantLogin, terminateUnit } from "@/lib/tenants.functions";
 import { pageMeta } from "@/lib/page-meta";
@@ -45,10 +48,31 @@ function UnitsPage() {
   const [editing, setEditing] = useState<{ id?: string; form: Form } | null>(null);
   const [login, setLogin] = useState<{ unit: Unit; username: string; password: string } | null>(null);
   const [ending, setEnding] = useState<Unit | null>(null);
+  const [acknowledgedPending, setAcknowledgedPending] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Unit | null>(null);
   const [busy, setBusy] = useState(false);
   const setLoginFn = useServerFn(setTenantLogin);
   const terminateFn = useServerFn(terminateUnit);
+  async function loadPending(unitId: string) {
+    const [bills, orders] = await Promise.all([
+      supabase.from("consumption_bills").select("id, kind, reference_month, amount, due_date, paid_at").eq("unit_id", unitId).is("paid_at", null).order("reference_month").order("id"),
+      supabase.from("service_orders").select("id, number, title, status").eq("unit_id", unitId).in("status", ["pendente", "em_andamento"]).order("number"),
+    ]);
+    if (bills.error) throw bills.error;
+    if (orders.error) throw orders.error;
+    return terminationPendingItems(bills.data, orders.data);
+  }
+  const pending = useQuery({
+    queryKey: ["termination-pending", ending?.id],
+    enabled: Boolean(ending),
+    queryFn: () => {
+      if (!ending) throw new Error("Selecione a unidade");
+      return loadPending(ending.id);
+    },
+    refetchInterval: 15000,
+  });
+  const pendingSignature = pending.data ? pendingItemsSignature(pending.data) : null;
+  const hasPending = Boolean(pending.data && (pending.data.bills.length || pending.data.orders.length));
 
   async function saveLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -83,9 +107,16 @@ function UnitsPage() {
   }
 
   async function terminate() {
-    if (!ending) return;
+    if (!ending || busy || !pending.data || (hasPending && acknowledgedPending !== pendingSignature)) return;
     setBusy(true);
     try {
+      const latest = await loadPending(ending.id);
+      if (pendingItemsSignature(latest) !== pendingSignature) {
+        qc.setQueryData(["termination-pending", ending.id], latest);
+        setAcknowledgedPending(null);
+        toast.error("As pendências mudaram. Confira a lista novamente antes de encerrar.");
+        return;
+      }
       await exportUnitReport(ending);
       await terminateFn({ data: { unitId: ending.id } });
       toast.success("Contrato encerrado e unidade inativada");
@@ -178,7 +209,7 @@ function UnitsPage() {
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" onClick={() => open(u)}>Editar</Button>
                       <Button variant="outline" size="sm" onClick={() => setLogin({ unit: u, username: u.username ?? "", password: "" })}>Acesso</Button>
-                      <Button variant="outline" size="sm" className="text-destructive" onClick={() => setEnding(u)}>Encerrar contrato</Button>
+                      <Button variant="outline" size="sm" className="text-destructive" onClick={() => { setAcknowledgedPending(null); setEnding(u); }}>Encerrar contrato</Button>
                     </div>
                   )}
                   <Button variant="ghost" size="icon" className="shrink-0 text-destructive" aria-label={`Excluir unidade ${u.identifier}`} title="Excluir unidade" disabled={busy} onClick={() => setDeleting(u)}><Trash2 className="size-4" /></Button>
@@ -243,14 +274,27 @@ function UnitsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!ending} onOpenChange={(o) => !o && setEnding(null)}>
-        <DialogContent>
+      <Dialog open={!!ending} onOpenChange={(o) => !o && !busy && setEnding(null)}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-xl">
           <DialogHeader><DialogTitle>Encerrar contrato · {ending?.identifier}</DialogTitle></DialogHeader>
           <p className="text-sm text-foreground/70">
             Vamos baixar um relatório com todos os dados da unidade, consumos, ordens de serviço e sugestões desde o início do vínculo.
             Depois a unidade será inativada e o acesso do condômino bloqueado. Para uma nova locação, crie um novo cadastro.
           </p>
-          <Button variant="destructive" disabled={busy} onClick={terminate}>{busy ? "Encerrando…" : "Exportar e encerrar"}</Button>
+          {pending.isPending && <p role="status" className="text-sm text-muted-foreground">Verificando contas e ordens de serviço…</p>}
+          {pending.isError && <div className="space-y-2"><p role="alert" className="text-sm text-destructive">Não foi possível verificar as pendências. O encerramento não está disponível.</p><Button variant="outline" onClick={() => pending.refetch()}>Tentar novamente</Button></div>}
+          {pending.data && <div className="space-y-4">
+            <section>
+              <h3 className="text-sm font-semibold">Contas em aberto ({pending.data.bills.length}) · {brl(pending.data.bills.reduce((sum, bill) => sum + bill.amount, 0))}</h3>
+              {pending.data.bills.length === 0 ? <p className="mt-1 text-sm text-muted-foreground">Nenhuma conta em aberto.</p> : <ul className="mt-2 divide-y text-sm">{pending.data.bills.map((bill) => <li key={bill.id} className="py-2"><div>{utilityLabel[bill.kind]} · {monthLabel(bill.reference_month)} · {brl(bill.amount)}</div><div className="text-xs text-muted-foreground">Vencimento: {bill.due_date ? dueDateLabel(bill.due_date) : "Não informado"}</div></li>)}</ul>}
+            </section>
+            <section>
+              <h3 className="text-sm font-semibold">Ordens de serviço abertas ({pending.data.orders.length})</h3>
+              {pending.data.orders.length === 0 ? <p className="mt-1 text-sm text-muted-foreground">Nenhuma ordem de serviço aberta.</p> : <ul className="mt-2 divide-y text-sm">{pending.data.orders.map((order) => <li key={order.id} className="break-words py-2">OS-{order.number} · {order.title}<div className="text-xs text-muted-foreground">{statusLabel[order.status]}</div></li>)}</ul>}
+            </section>
+            {hasPending && <label className="flex items-start gap-2 text-sm text-destructive"><Checkbox aria-label="Confirmar encerramento com pendências" checked={acknowledgedPending === pendingSignature} onCheckedChange={(checked) => setAcknowledgedPending(checked === true ? pendingSignature : null)} /><span>Estou ciente das pendências acima e desejo encerrar o contrato mesmo assim. As contas e ordens permanecerão no histórico.</span></label>}
+          </div>}
+          <Button variant="destructive" disabled={busy || pending.isFetching || !pending.data || pending.isError || (hasPending && acknowledgedPending !== pendingSignature)} onClick={terminate}>{busy ? "Encerrando…" : "Exportar e encerrar"}</Button>
         </DialogContent>
       </Dialog>
     </>
