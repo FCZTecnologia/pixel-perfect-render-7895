@@ -43,6 +43,13 @@
       "when": 1792418287125,
       "tag": "0005_unit_notices_bill_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792582450063,
+      "tag": "0006_admin_delete_unit",
+      "breakpoints": true
     }
   ]
 }
