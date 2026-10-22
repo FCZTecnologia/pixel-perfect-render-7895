@@ -1,3 +1,4 @@
+- [ ] Adicionar Fale conosco para condôminos e cadastro/edição de contatos por setor para admin; verificar salvamento e permissões.
 - [x] Configurar SMTP SSL/TLS no painel administrador, teste por unidade e notificações de contas e avisos ao e-mail de contato; 5 testes de segurança e destinatários passam.
 - [ ] Confirmar salvamento e envio real por SMTP: aguarda administrador conectado e dados do servidor configurados no painel; publicar para ativar no site público.
 - [x] Ocultar unidades inativas em todos os filtros e reportar pendências antes do encerramento, com 5 testes de regras passando.

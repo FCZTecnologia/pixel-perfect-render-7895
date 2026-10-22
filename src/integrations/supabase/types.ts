@@ -117,6 +117,33 @@ export type Database = {
           },
         ]
       }
+      department_contacts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          id?: string
+          name: string
+          phone?: string
+          whatsapp?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       notice_messages: {
         Row: {
           author_id: string
