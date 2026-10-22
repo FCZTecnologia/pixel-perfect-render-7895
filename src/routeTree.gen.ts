@@ -17,6 +17,7 @@ import { Route as AuthenticatedAvisosRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedConsumoRouteImport } from './routes/_authenticated/consumo'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEmailRouteImport } from './routes/_authenticated/email'
+import { Route as AuthenticatedFaleConoscoRouteImport } from './routes/_authenticated/fale-conosco'
 import { Route as AuthenticatedSugestoesRouteImport } from './routes/_authenticated/sugestoes'
 import { Route as AuthenticatedUnidadesRouteImport } from './routes/_authenticated/unidades'
 import { Route as AuthenticatedOrdensIndexRouteImport } from './routes/_authenticated/ordens.index'
@@ -61,6 +62,12 @@ const AuthenticatedEmailRoute = AuthenticatedEmailRouteImport.update({
   path: '/email',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFaleConoscoRoute =
+  AuthenticatedFaleConoscoRouteImport.update({
+    id: '/fale-conosco',
+    path: '/fale-conosco',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSugestoesRoute = AuthenticatedSugestoesRouteImport.update({
   id: '/sugestoes',
   path: '/sugestoes',
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/consumo': typeof AuthenticatedConsumoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email': typeof AuthenticatedEmailRoute
+  '/fale-conosco': typeof AuthenticatedFaleConoscoRoute
   '/sugestoes': typeof AuthenticatedSugestoesRoute
   '/unidades': typeof AuthenticatedUnidadesRoute
   '/ordens/$id': typeof AuthenticatedOrdensIdRoute
@@ -104,6 +112,7 @@ export interface FileRoutesByTo {
   '/consumo': typeof AuthenticatedConsumoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/email': typeof AuthenticatedEmailRoute
+  '/fale-conosco': typeof AuthenticatedFaleConoscoRoute
   '/sugestoes': typeof AuthenticatedSugestoesRoute
   '/unidades': typeof AuthenticatedUnidadesRoute
   '/ordens/$id': typeof AuthenticatedOrdensIdRoute
@@ -119,6 +128,7 @@ export interface FileRoutesById {
   '/_authenticated/consumo': typeof AuthenticatedConsumoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/email': typeof AuthenticatedEmailRoute
+  '/_authenticated/fale-conosco': typeof AuthenticatedFaleConoscoRoute
   '/_authenticated/sugestoes': typeof AuthenticatedSugestoesRoute
   '/_authenticated/unidades': typeof AuthenticatedUnidadesRoute
   '/_authenticated/ordens/$id': typeof AuthenticatedOrdensIdRoute
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/consumo'
     | '/dashboard'
     | '/email'
+    | '/fale-conosco'
     | '/sugestoes'
     | '/unidades'
     | '/ordens/$id'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/consumo'
     | '/dashboard'
     | '/email'
+    | '/fale-conosco'
     | '/sugestoes'
     | '/unidades'
     | '/ordens/$id'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
     | '/_authenticated/consumo'
     | '/_authenticated/dashboard'
     | '/_authenticated/email'
+    | '/_authenticated/fale-conosco'
     | '/_authenticated/sugestoes'
     | '/_authenticated/unidades'
     | '/_authenticated/ordens/$id'
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEmailRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fale-conosco': {
+      id: '/_authenticated/fale-conosco'
+      path: '/fale-conosco'
+      fullPath: '/fale-conosco'
+      preLoaderRoute: typeof AuthenticatedFaleConoscoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sugestoes': {
       id: '/_authenticated/sugestoes'
       path: '/sugestoes'
@@ -268,6 +288,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedConsumoRoute: typeof AuthenticatedConsumoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmailRoute: typeof AuthenticatedEmailRoute
+  AuthenticatedFaleConoscoRoute: typeof AuthenticatedFaleConoscoRoute
   AuthenticatedSugestoesRoute: typeof AuthenticatedSugestoesRoute
   AuthenticatedUnidadesRoute: typeof AuthenticatedUnidadesRoute
   AuthenticatedOrdensIdRoute: typeof AuthenticatedOrdensIdRoute
@@ -279,6 +300,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedConsumoRoute: AuthenticatedConsumoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmailRoute: AuthenticatedEmailRoute,
+  AuthenticatedFaleConoscoRoute: AuthenticatedFaleConoscoRoute,
   AuthenticatedSugestoesRoute: AuthenticatedSugestoesRoute,
   AuthenticatedUnidadesRoute: AuthenticatedUnidadesRoute,
   AuthenticatedOrdensIdRoute: AuthenticatedOrdensIdRoute,
