@@ -22,6 +22,7 @@ const adminNav = [
   { to: "/ordens", label: "Ordens de serviço" },
   { to: "/avisos", label: "Avisos" },
   { to: "/sugestoes", label: "Sugestões" },
+  { to: "/email", label: "E-mail e notificações" },
 ] as const;
 const tenantNav = [
   { to: "/dashboard", label: "Visão geral" },

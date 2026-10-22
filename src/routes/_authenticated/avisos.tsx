@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoticeConversation, type ConversationNotice } from "@/components/NoticeConversation";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyUnitEvent } from "@/lib/smtp.functions";
 
 export const Route = createFileRoute("/_authenticated/avisos")({
   head: () => pageMeta("Avisos — Painel Bandeiras Empresarial", "Comunicados gerais e individuais da administração e respostas dos condôminos."),
@@ -34,6 +36,7 @@ export function useNotices() {
 function NoticesPage() {
   const { isAdmin } = Route.useRouteContext();
   const qc = useQueryClient();
+  const notify = useServerFn(notifyUnitEvent);
   const { data = [], isPending, error } = useNotices();
   const { data: units = [] } = useQuery({ queryKey: ["notice-units"], enabled: isAdmin, queryFn: async () => {
     const { data, error } = await supabase.from("units").select("id, identifier, owner_name").eq("active", true).is("terminated_at", null).order("identifier");
@@ -52,13 +55,19 @@ function NoticesPage() {
     e.preventDefault();
     if (!title.trim()) return void toast.error("Informe o título");
     setSaving(true);
-    const { error } = await supabase.from("notices").insert({ title: title.trim().slice(0, 150), body: body.trim().slice(0, 4000), unit_id: target === "general" ? null : target });
-    setSaving(false);
-    if (error) return void toast.error(error.message);
+    const { data: saved, error } = await supabase.from("notices").insert({ title: title.trim().slice(0, 150), body: body.trim().slice(0, 4000), unit_id: target === "general" ? null : target }).select("id").single();
+    if (error) { setSaving(false); return void toast.error(error.message); }
     setTitle(""); setBody("");
     toast.success("Aviso publicado");
     qc.invalidateQueries({ queryKey: ["notices"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
+    if (saved) {
+      try {
+        const result = await notify({ data: { event: "notice", id: saved.id } });
+        if (result.failed) toast.warning(`Aviso publicado; ${result.failed} notificação(ões) por e-mail não foram enviadas.`);
+      } catch { toast.warning("Aviso publicado, mas não foi possível enviar o e-mail."); }
+    }
+    setSaving(false);
   }
   async function remove(id: string) {
     const { error } = await supabase.from("notices").delete().eq("id", id);
