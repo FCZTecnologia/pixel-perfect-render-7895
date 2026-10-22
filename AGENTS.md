@@ -21,3 +21,4 @@
 - Notices use a nullable unit target and a separate reply thread; RLS restricts targeted notices and replies to admins and current unit owners so general announcements remain read-only for tenants.
 - Invoice due dates are calendar dates and payment confirmation is stored on each bill; browser updates use admin-only RLS and shared billing status logic to keep all bill displays consistent.
 - Content-route metadata uses leaf-specific titles and descriptions; shared pageMeta supplies the standard social tags for protected pages.
+- Custom SMTP uses admin-validated server functions, an AES-GCM encrypted configuration in private storage, and implicit TLS only; production uses the Worker-native mailer and local development uses Nodemailer. Notifications derive recipients from active unit contact emails and preserve saved bills/notices when sending fails; per-event storage markers avoid ordinary duplicate sends without a queue or email tables.

@@ -7,11 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { num, uploadAnexo, utilityKinds, utilityLabel, utilityUnit, type Unit, type UtilityKind } from "@/lib/condo";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyUnitEvent } from "@/lib/smtp.functions";
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
 export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: boolean }) {
   const qc = useQueryClient();
+  const notify = useServerFn(notifyUnitEvent);
   const [unitId, setUnitId] = useState("");
   const [kind, setKind] = useState<UtilityKind>("energia");
   const [month, setMonth] = useState(thisMonth());
@@ -36,7 +39,7 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
     setSaving(true);
     try {
       const attachment_path = file ? await uploadAnexo(unitId, file, `fatura-${kind}-${month}`) : undefined;
-      const { error } = await supabase.from("consumption_bills").upsert(
+      const { data: saved, error } = await supabase.from("consumption_bills").upsert(
         {
           unit_id: unitId, kind, reference_month: `${month}-01`,
           reading_prev: n(v.prev), reading_curr: n(v.curr), amount: n(v.amount),
@@ -44,9 +47,15 @@ export function ConsumptionForm({ units, compact }: { units: Unit[]; compact?: b
           ...(attachment_path ? { attachment_path } : {}),
         },
         { onConflict: "unit_id,reference_month,kind" },
-      );
+      ).select("id").single();
       if (error) throw error;
       toast.success(`${utilityLabel[kind]} registrada`);
+      if (saved) {
+        try {
+          const result = await notify({ data: { event: "bill", id: saved.id } });
+          if (result.failed) toast.warning("Conta salva, mas a notificação por e-mail falhou. Confira o SMTP.");
+        } catch { toast.warning("Conta salva, mas não foi possível enviar o e-mail."); }
+      }
       setV({ prev: "", curr: "", amount: "" });
       setFile(null);
       setDueDate("");

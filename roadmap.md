@@ -1,4 +1,5 @@
-- [ ] Configurar SMTP no painel administrador e notificações de contas e avisos para o e-mail de contato da unidade.
+- [x] Configurar SMTP SSL/TLS no painel administrador, teste por unidade e notificações de contas e avisos ao e-mail de contato; 5 testes de segurança e destinatários passam.
+- [ ] Confirmar salvamento e envio real por SMTP: aguarda administrador conectado e dados do servidor configurados no painel; publicar para ativar no site público.
 - [x] Ocultar unidades inativas em todos os filtros e reportar pendências antes do encerramento, com 5 testes de regras passando.
 - [ ] Conferir filtros e aviso de encerramento na tela: requer login de administrador na prévia, pois não foi possível obter acesso autorizado.
 - [x] Adicionar exclusão de unidades pelo administrador com confirmação, exportação opcional e testes.
